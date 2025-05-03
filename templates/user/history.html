@@ -1,0 +1,26 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+<h2>Recent Parking History</h2>
+<table border="1">
+    <tr>
+        <th>Booking ID</th>
+        <th>Vehicle</th>
+        <th>Lot</th>
+        <th>Spot</th>
+        <th>From</th>
+        <th>To</th>
+        <th>Status</th>
+    </tr>
+    {% for record in bookings %}
+    <tr>
+        <td>{{ record.id }}</td>
+        <td>{{ record.vehicle_no }}</td>
+        <td>{{ record.lot_name }}</td>
+        <td>{{ record.spot_no }}</td>
+        <td>{{ record.start_time }}</td>
+        <td>{{ record.end_time or '-' }}</td>
+        <td>{{ record.status }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

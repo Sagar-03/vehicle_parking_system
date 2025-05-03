@@ -1,0 +1,16 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+<h2>Statistics</h2>
+<div>
+    <h3>Overview</h3>
+    <p>Total Users: {{ stats.total_users }}</p>
+    <p>Total Bookings: {{ stats.total_bookings }}</p>
+    <p>Total Parking Lots: {{ stats.total_lots }}</p>
+</div>
+<div>
+    <h3>Charts</h3>
+    <img src="{{ url_for('static', filename='charts/pie.png') }}" alt="Pie Chart">
+    <img src="{{ url_for('static', filename='charts/bar.png') }}" alt="Bar Chart">
+</div>
+{% endblock %}
+

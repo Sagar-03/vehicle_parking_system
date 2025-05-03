@@ -1,0 +1,28 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+<h2>Book a Parking Spot</h2>
+<form method="POST">
+    <label>Vehicle No:</label>
+    <input type="text" name="vehicle_no" required><br>
+
+    <label>Lot:</label>
+    <select name="lot_id">
+        {% for lot in lots %}
+            <option value="{{ lot.id }}">{{ lot.name }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label>Spot:</label>
+    <select name="spot_id">
+        {% for spot in spots %}
+            <option value="{{ spot.id }}">{{ spot.number }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label>Hours:</label>
+    <input type="number" name="hours" min="1" required><br>
+
+    <input type="submit" value="Book">
+</form>
+{% endblock %}
+

@@ -1,0 +1,9 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+<h2>Welcome to User Dashboard</h2>
+<a href="{{ url_for('user.book_parking') }}">Book a Parking Spot</a> |
+<a href="{{ url_for('user.release_parking') }}">Release Parking</a> |
+<a href="{{ url_for('user.history') }}">Parking History</a> |
+<a href="{{ url_for('user.summary') }}">View Summary</a>
+{% endblock %}
+

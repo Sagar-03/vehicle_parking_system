@@ -1,0 +1,17 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+<h2>Release Parking Spot</h2>
+<form method="POST">
+    <label>Booking ID:</label>
+    <input type="text" name="booking_id" required><br>
+
+    <label>Vehicle Number:</label>
+    <input type="text" name="vehicle_no" required><br>
+
+    <label>Releasing Time:</label>
+    <input type="datetime-local" name="release_time" required><br>
+
+    <input type="submit" value="Release">
+</form>
+{% endblock %}
+

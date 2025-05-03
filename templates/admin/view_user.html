@@ -1,0 +1,15 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+<h2>Registered Users</h2>
+<table>
+    <tr><th>Name</th><th>Email</th><th>Action</th></tr>
+    {% for user in users %}
+    <tr>
+        <td>{{ user.name }}</td>
+        <td>{{ user.email }}</td>
+        <td><a href="{{ url_for('admin.delete_user', user_id=user.id) }}">Delete</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
+

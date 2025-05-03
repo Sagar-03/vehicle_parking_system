@@ -1,0 +1,14 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+<h2>Welcome to Admin Dashboard</h2>
+<div>
+    <a href="{{ url_for('admin.add_parking_lot') }}">+ Add Lot</a>
+    <h3>Parking Lots</h3>
+    {% for lot in parking_lots %}
+        <div>
+            <p>{{ lot.name }} - {{ lot.total_spots }} spots</p>
+            <a href="{{ url_for('admin.view_parking_spot', lot_id=lot.id) }}">View</a>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

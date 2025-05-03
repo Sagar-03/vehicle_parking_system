@@ -1,0 +1,11 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+<h2>Parking Spots in {{ lot.name }}</h2>
+{% for spot in spots %}
+    <div>
+        Spot {{ spot.number }} - {{ 'Occupied' if spot.occupied else 'Available' }}
+        <a href="{{ url_for('admin.edit_parking_spot', spot_id=spot.id) }}">Edit</a>
+    </div>
+{% endfor %}
+<a href="{{ url_for('admin.add_parking_spot', lot_id=lot.id) }}">+ Add Spot</a>
+{% endblock %}

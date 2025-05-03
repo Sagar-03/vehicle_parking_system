@@ -1,0 +1,11 @@
+{% extends 'shared/base.html' %}
+{% block content %}
+<h2>Add Parking Lot</h2>
+<form method="POST">
+    <input name="name" placeholder="Lot Name" required>
+    <input name="address" placeholder="Address" required>
+    <input name="price_per_hour" type="number" placeholder="Price/hour" required>
+    <input name="total_spots" type="number" placeholder="Total Spots" required>
+    <button type="submit">Add</button>
+</form>
+{% endblock %}
