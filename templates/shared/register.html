@@ -1,244 +1,89 @@
-{% extends "base.html" %}
+{% extends 'shared/base.html' %}
 
 {% block title %}Register - Vehicle Parking System{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-    <div class="auth-card">
-        <div class="auth-header text-center">
-            <i class="fas fa-user-plus auth-icon"></i>
-            <h2 class="mb-4">Create an Account</h2>
-        </div>
-        <form method="POST" action="{{ url_for('auth.register') }}">
-            {{ form.hidden_tag() }}
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="first_name" class="form-label">First Name</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-user"></i></span>
-                        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="Enter first name" required>
-                    </div>
-                    {% if form.first_name.errors %}
-                        <div class="text-danger mt-1">
-                            {% for error in form.first_name.errors %}
-                                <small>{{ error }}</small>
-                            {% endfor %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title text-center mb-0">User Registration</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('user.register') }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="first_name" class="form-label">First Name:</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ request.form.first_name }}" required>
                         </div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="last_name" class="form-label">Last Name</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-user"></i></span>
-                        <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Enter last name" required>
-                    </div>
-                    {% if form.last_name.errors %}
-                        <div class="text-danger mt-1">
-                            {% for error in form.last_name.errors %}
-                                <small>{{ error }}</small>
-                            {% endfor %}
+                        <div class="col-md-6 mb-3">
+                            <label for="last_name" class="form-label">Last Name:</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ request.form.last_name }}" required>
                         </div>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="mb-3">
-                <label for="email" class="form-label">Email address</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
-                </div>
-                {% if form.email.errors %}
-                    <div class="text-danger mt-1">
-                        {% for error in form.email.errors %}
-                            <small>{{ error }}</small>
-                        {% endfor %}
                     </div>
-                {% endif %}
-            </div>
-            <div class="mb-3">
-                <label for="phone" class="form-label">Phone Number</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="Enter phone number" required>
-                </div>
-                {% if form.phone.errors %}
-                    <div class="text-danger mt-1">
-                        {% for error in form.phone.errors %}
-                            <small>{{ error }}</small>
-                        {% endfor %}
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email:</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ request.form.email }}" required>
+                        {% if form and form.email.errors %}
+                            <div class="text-danger">
+                                {% for error in form.email.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
-                {% endif %}
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Create a password" required>
-                    <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-                <div class="password-strength mt-1 d-none">
-                    <small class="d-block">Password strength: <span class="strength-text">Weak</span></small>
-                    <div class="progress mt-1" style="height: 5px;">
-                        <div class="progress-bar bg-danger" role="progressbar" style="width: 0%"></div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number:</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" value="{{ request.form.phone }}" required>
                     </div>
-                </div>
-                {% if form.password.errors %}
-                    <div class="text-danger mt-1">
-                        {% for error in form.password.errors %}
-                            <small>{{ error }}</small>
-                        {% endfor %}
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username:</label>
+                        <input type="text" class="form-control" id="username" name="username" value="{{ request.form.username }}" required>
+                        {% if form and form.username.errors %}
+                            <div class="text-danger">
+                                {% for error in form.username.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
-                {% endif %}
-            </div>
-            <div class="mb-3">
-                <label for="confirm_password" class="form-label">Confirm Password</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
-                    <button class="btn btn-outline-secondary toggle-password" type="button" data-target="confirm_password">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-                <div id="password-match" class="mt-1 d-none">
-                    <small class="text-danger">Passwords do not match</small>
-                </div>
-                {% if form.confirm_password.errors %}
-                    <div class="text-danger mt-1">
-                        {% for error in form.confirm_password.errors %}
-                            <small>{{ error }}</small>
-                        {% endfor %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">Password:</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="confirm_password" class="form-label">Confirm Password:</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            {% if form and form.confirm_password.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.confirm_password.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
-                {% endif %}
-            </div>
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
-                <label class="form-check-label" for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
-                {% if form.terms.errors %}
-                    <div class="text-danger mt-1">
-                        {% for error in form.terms.errors %}
-                            <small>{{ error }}</small>
-                        {% endfor %}
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
+                        <label class="form-check-label" for="terms">I agree to the <a href="#">Terms and Conditions</a></label>
                     </div>
-                {% endif %}
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Register</button>
+                    </div>
+                </form>
+                
+                <div class="mt-3 text-center">
+                    <p>Already have an account? <a href="{{ url_for('user.login') }}">Login here</a></p>
+                </div>
             </div>
-            <div class="text-center">
-                <button type="submit" class="btn btn-success btn-lg w-100">
-                    <i class="fas fa-user-plus me-2"></i>Register
-                </button>
-            </div>
-        </form>
-        <div class="auth-footer text-center mt-4">
-            <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Toggle password visibility
-        const toggleButtons = document.querySelectorAll('.toggle-password');
-        toggleButtons.forEach(function(button) {
-            button.addEventListener('click', function() {
-                const targetId = this.getAttribute('data-target') || 'password';
-                const passwordInput = document.querySelector('#' + targetId);
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-                
-                // Toggle icon
-                const icon = this.querySelector('i');
-                icon.classList.toggle('fa-eye');
-                icon.classList.toggle('fa-eye-slash');
-            });
-        });
-
-        // Password strength checker
-        const passwordInput = document.querySelector('#password');
-        const strengthMeter = document.querySelector('.password-strength');
-        const strengthBar = document.querySelector('.progress-bar');
-        const strengthText = document.querySelector('.strength-text');
-
-        passwordInput.addEventListener('input', function() {
-            const password = this.value;
-            let strength = 0;
-            
-            // Show strength meter if password is being typed
-            if (password.length > 0) {
-                strengthMeter.classList.remove('d-none');
-            } else {
-                strengthMeter.classList.add('d-none');
-                return;
-            }
-
-            // Check length
-            if (password.length >= 8) strength += 1;
-            if (password.length >= 12) strength += 1;
-            
-            // Check for lowercase and uppercase
-            if (password.match(/[a-z]+/)) strength += 1;
-            if (password.match(/[A-Z]+/)) strength += 1;
-            
-            // Check for numbers and special characters
-            if (password.match(/[0-9]+/)) strength += 1;
-            if (password.match(/[^a-zA-Z0-9]+/)) strength += 1;
-
-            // Update strength indicator
-            switch (strength) {
-                case 0:
-                case 1:
-                    strengthBar.className = 'progress-bar bg-danger';
-                    strengthBar.style.width = '20%';
-                    strengthText.textContent = 'Very Weak';
-                    break;
-                case 2:
-                    strengthBar.className = 'progress-bar bg-warning';
-                    strengthBar.style.width = '40%';
-                    strengthText.textContent = 'Weak';
-                    break;
-                case 3:
-                    strengthBar.className = 'progress-bar bg-info';
-                    strengthBar.style.width = '60%';
-                    strengthText.textContent = 'Medium';
-                    break;
-                case 4:
-                    strengthBar.className = 'progress-bar bg-primary';
-                    strengthBar.style.width = '80%';
-                    strengthText.textContent = 'Strong';
-                    break;
-                case 5:
-                case 6:
-                    strengthBar.className = 'progress-bar bg-success';
-                    strengthBar.style.width = '100%';
-                    strengthText.textContent = 'Very Strong';
-                    break;
-            }
-        });
-
-        // Password match checker
-        const confirmPasswordInput = document.querySelector('#confirm_password');
-        const passwordMatchDiv = document.querySelector('#password-match');
-
-        confirmPasswordInput.addEventListener('input', function() {
-            const confirmValue = this.value;
-            const passwordValue = passwordInput.value;
-            
-            if (confirmValue) {
-                passwordMatchDiv.classList.remove('d-none');
-                
-                if (confirmValue === passwordValue) {
-                    passwordMatchDiv.querySelector('small').className = 'text-success';
-                    passwordMatchDiv.querySelector('small').textContent = 'Passwords match';
-                } else {
-                    passwordMatchDiv.querySelector('small').className = 'text-danger';
-                    passwordMatchDiv.querySelector('small').textContent = 'Passwords do not match';
-                }
-            } else {
-                passwordMatchDiv.classList.add('d-none');
-            }
-        });
-    });
-</script>
 {% endblock %}

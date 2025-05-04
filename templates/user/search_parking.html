@@ -1,0 +1,158 @@
+{% extends 'shared/base.html' %}
+
+{% block title %}Search Parking Lots - Vehicle Parking System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>Search Parking Lots</h2>
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <a class="nav-link" href="{{ url_for('user.dashboard') }}">Dashboard</a>
+                <a class="nav-link" href="{{ url_for('user.book_parking') }}">Book Parking</a>
+                <a class="nav-link" href="{{ url_for('user.vehicles') }}">My Vehicles</a>
+                <a class="nav-link active" href="{{ url_for('user.search_parking') }}">Find Parking</a>
+                <a class="nav-link" href="{{ url_for('user.history') }}">History</a>
+                <a class="nav-link" href="{{ url_for('user.summary') }}">Summary</a>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Find Parking Near You</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('user.search_parking') }}" class="row g-3">
+                    <div class="col-md-6">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Enter location, area or PIN code" name="search" value="{{ search_term }}">
+                            <button class="btn btn-primary" type="submit">Search</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="type" id="searchByArea" value="area" {% if search_type == 'area' %}checked{% endif %}>
+                            <label class="form-check-label" for="searchByArea">Search by Area</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="type" id="searchByPincode" value="pincode" {% if search_type == 'pincode' %}checked{% endif %}>
+                            <label class="form-check-label" for="searchByPincode">Search by PIN Code</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    {% if search_term %}
+                        Search Results for "{{ search_term }}" 
+                        <small class="text-muted">({{ parking_lots|length }} result{{ 's' if parking_lots|length != 1 else '' }})</small>
+                    {% else %}
+                        All Parking Lots
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if parking_lots %}
+                    <div class="row">
+                        {% for lot in parking_lots %}
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card h-100">
+                                    {% if lot.image_url %}
+                                        <img src="{{ lot.image_url }}" class="card-img-top" alt="{{ lot.name }}">
+                                    {% else %}
+                                        <div class="card-img-top bg-light text-center p-3" style="height: 120px;">
+                                            <i class="bi bi-p-circle-fill" style="font-size: 3rem;"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ lot.name }}</h5>
+                                        <p class="card-text">{{ lot.address }}</p>
+                                        <ul class="list-group list-group-flush mb-3">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                PIN Code:
+                                                <span class="badge bg-primary rounded-pill">{{ lot.pin_code }}</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Available Spots:
+                                                <span class="badge bg-success rounded-pill">{{ lot.available_spots }} / {{ lot.total_spots }}</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Rate:
+                                                <span class="badge bg-info rounded-pill">${{ lot.price }} / hour</span>
+                                            </li>
+                                        </ul>
+                                        <div class="d-grid">
+                                            <a href="{{ url_for('user.book_parking') }}?lot_id={{ lot.id }}" class="btn btn-primary">Book Parking</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info text-center p-5">
+                        <i class="bi bi-search fs-1"></i>
+                        <h4>No Parking Lots Found</h4>
+                        <p>Try searching with different keywords or check a different area.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if parking_lots and parking_lots|length > 0 %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Parking Lots Map</h5>
+            </div>
+            <div class="card-body">
+                <div id="map" style="height: 400px;" class="border rounded">
+                    <!-- Map will be loaded here -->
+                    <div class="text-center p-5">
+                        <p>Map loading...</p>
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Simple map placeholder - in production integrate with Google Maps or Leaflet
+    document.addEventListener('DOMContentLoaded', function() {
+        const mapElement = document.getElementById('map');
+        if (mapElement) {
+            // For the demo, just show a placeholder message
+            mapElement.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="alert alert-info">
+                        <h5>Map Integration</h5>
+                        <p>In production, this would display an interactive map showing all parking lots.</p>
+                        <p>Integration with services like Google Maps or Leaflet would be implemented here.</p>
+                    </div>
+                </div>
+            `;
+        }
+    });
+</script>
+{% endblock %}
