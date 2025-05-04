@@ -1,11 +1,312 @@
-{% extends 'shared/base.html' %}
-{% block content %}
-<h2>Parking Spots in {{ lot.name }}</h2>
-{% for spot in spots %}
-    <div>
-        Spot {{ spot.number }} - {{ 'Occupied' if spot.occupied else 'Available' }}
-        <a href="{{ url_for('admin.edit_parking_spot', spot_id=spot.id) }}">Edit</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Parking Spots - Admin Dashboard</title>
+    <link rel="stylesheet" href="../shared/styles/admin.css">
+    <script src="scripts/view_parking_spot.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Vehicle Parking System - Admin</h1>
+        <div class="user-info">
+            <span>Admin: <span id="admin-name">John Doe</span></span>
+            <a href="login.html" class="logout-btn">Logout</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav class="sidebar">
+            <ul>
+                <li><a href="admin_dashboard.html">Dashboard</a></li>
+                <li><a href="add_parking_lot.html">Add Parking Lot</a></li>
+                <li><a href="view_parking_spot.html" class="active">View Parking Spots</a></li>
+                <li><a href="view_user.html">View Users</a></li>
+                <li><a href="statistics.html">Statistics</a></li>
+                <li><a href="../index.html">Main Site</a></li>
+            </ul>
+        </nav>
+
+        <main class="content">
+            <h2>View Parking Spots</h2>
+            
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label for="parking-lot">Parking Lot:</label>
+                    <select id="parking-lot">
+                        <option value="all">All Parking Lots</option>
+                        <option value="north">North Lot</option>
+                        <option value="south">South Lot</option>
+                        <option value="east">East Lot</option>
+                        <option value="west">West Lot</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="status-filter">Status:</label>
+                    <select id="status-filter">
+                        <option value="all">All Statuses</option>
+                        <option value="available">Available</option>
+                        <option value="occupied">Occupied</option>
+                        <option value="reserved">Reserved</option>
+                        <option value="maintenance">Maintenance</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="spot-type">Spot Type:</label>
+                    <select id="spot-type">
+                        <option value="all">All Types</option>
+                        <option value="standard">Standard</option>
+                        <option value="handicapped">Handicapped</option>
+                        <option value="reserved">Reserved</option>
+                        <option value="electric">Electric Vehicle</option>
+                    </select>
+                </div>
+                
+                <button id="apply-filters" class="btn primary">Apply Filters</button>
+                <button id="reset-filters" class="btn secondary">Reset</button>
+            </div>
+            
+            <div class="parking-lot-view">
+                <h3>Parking Lot Overview</h3>
+                
+                <div class="lot-visualization">
+                    <div class="legend">
+                        <div class="legend-item"><span class="status-dot available"></span> Available</div>
+                        <div class="legend-item"><span class="status-dot occupied"></span> Occupied</div>
+                        <div class="legend-item"><span class="status-dot reserved"></span> Reserved</div>
+                        <div class="legend-item"><span class="status-dot maintenance"></span> Maintenance</div>
+                    </div>
+                    
+                    <div class="parking-grid">
+                        <!-- This will be populated dynamically, but here's a sample -->
+                        <div class="parking-spot available" data-spot-id="A-1" data-spot-type="standard">A-1</div>
+                        <div class="parking-spot occupied" data-spot-id="A-2" data-spot-type="standard">A-2</div>
+                        <div class="parking-spot reserved" data-spot-id="A-3" data-spot-type="standard">A-3</div>
+                        <div class="parking-spot available" data-spot-id="A-4" data-spot-type="handicapped">A-4</div>
+                        <div class="parking-spot maintenance" data-spot-id="A-5" data-spot-type="standard">A-5</div>
+                        <div class="parking-spot available" data-spot-id="A-6" data-spot-type="standard">A-6</div>
+                        <div class="parking-spot occupied" data-spot-id="B-1" data-spot-type="standard">B-1</div>
+                        <div class="parking-spot available" data-spot-id="B-2" data-spot-type="standard">B-2</div>
+                        <div class="parking-spot available" data-spot-id="B-3" data-spot-type="standard">B-3</div>
+                        <div class="parking-spot reserved" data-spot-id="B-4" data-spot-type="electric">B-4</div>
+                        <div class="parking-spot occupied" data-spot-id="B-5" data-spot-type="standard">B-5</div>
+                        <div class="parking-spot available" data-spot-id="B-6" data-spot-type="standard">B-6</div>
+                        <div class="parking-spot available" data-spot-id="C-1" data-spot-type="standard">C-1</div>
+                        <div class="parking-spot maintenance" data-spot-id="C-2" data-spot-type="standard">C-2</div>
+                        <div class="parking-spot available" data-spot-id="C-3" data-spot-type="handicapped">C-3</div>
+                        <div class="parking-spot occupied" data-spot-id="C-4" data-spot-type="standard">C-4</div>
+                        <div class="parking-spot available" data-spot-id="C-5" data-spot-type="standard">C-5</div>
+                        <div class="parking-spot occupied" data-spot-id="C-6" data-spot-type="standard">C-6</div>
+                    </div>
+                </div>
+                
+                <div class="lot-summary">
+                    <div class="summary-item">
+                        <h4>Total Spots</h4>
+                        <span class="summary-value">96</span>
+                    </div>
+                    <div class="summary-item">
+                        <h4>Available</h4>
+                        <span class="summary-value">45</span>
+                    </div>
+                    <div class="summary-item">
+                        <h4>Occupied</h4>
+                        <span class="summary-value">38</span>
+                    </div>
+                    <div class="summary-item">
+                        <h4>Reserved</h4>
+                        <span class="summary-value">8</span>
+                    </div>
+                    <div class="summary-item">
+                        <h4>Maintenance</h4>
+                        <span class="summary-value">5</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="parking-spots-table">
+                <h3>Parking Spots List</h3>
+                
+                <div class="table-controls">
+                    <div class="search-box">
+                        <input type="text" id="spot-search" placeholder="Search spots...">
+                        <button id="search-btn">Search</button>
+                    </div>
+                    
+                    <div class="bulk-actions">
+                        <select id="bulk-action">
+                            <option value="">-- Bulk Actions --</option>
+                            <option value="set-maintenance">Set to Maintenance</option>
+                            <option value="set-available">Set to Available</option>
+                            <option value="delete">Delete Selected</option>
+                        </select>
+                        <button id="apply-bulk-action">Apply</button>
+                    </div>
+                </div>
+                
+                <table class="data-table" id="parking-spots-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="select-all"></th>
+                            <th>Spot ID</th>
+                            <th>Parking Lot</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Current User</th>
+                            <th>Since</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="checkbox" class="spot-select"></td>
+                            <td>A-1</td>
+                            <td>North Lot</td>
+                            <td>Standard</td>
+                            <td><span class="status-badge available">Available</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>
+                                <button class="action-btn edit">Edit</button>
+                                <button class="action-btn delete">Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="spot-select"></td>
+                            <td>A-2</td>
+                            <td>North Lot</td>
+                            <td>Standard</td>
+                            <td><span class="status-badge occupied">Occupied</span></td>
+                            <td>John Smith</td>
+                            <td>May 4, 2025 10:30 AM</td>
+                            <td>
+                                <button class="action-btn edit">Edit</button>
+                                <button class="action-btn delete">Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="spot-select"></td>
+                            <td>A-3</td>
+                            <td>North Lot</td>
+                            <td>Standard</td>
+                            <td><span class="status-badge reserved">Reserved</span></td>
+                            <td>Jane Doe</td>
+                            <td>Reserved for May 5, 2025</td>
+                            <td>
+                                <button class="action-btn edit">Edit</button>
+                                <button class="action-btn delete">Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="spot-select"></td>
+                            <td>A-4</td>
+                            <td>North Lot</td>
+                            <td>Handicapped</td>
+                            <td><span class="status-badge available">Available</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>
+                                <button class="action-btn edit">Edit</button>
+                                <button class="action-btn delete">Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" class="spot-select"></td>
+                            <td>A-5</td>
+                            <td>North Lot</td>
+                            <td>Standard</td>
+                            <td><span class="status-badge maintenance">Maintenance</span></td>
+                            <td>-</td>
+                            <td>Since May 1, 2025</td>
+                            <td>
+                                <button class="action-btn edit">Edit</button>
+                                <button class="action-btn delete">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="pagination">
+                    <button id="prev-page" disabled>Previous</button>
+                    <span id="page-info">Page 1 of 4</span>
+                    <button id="next-page">Next</button>
+                </div>
+            </div>
+            
+            <!-- Spot Details Modal -->
+            <div id="spot-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Parking Spot Details</h3>
+                        <span class="close">&times;</span>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="edit-spot-id">Spot ID:</label>
+                            <input type="text" id="edit-spot-id" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-parking-lot">Parking Lot:</label>
+                            <select id="edit-parking-lot">
+                                <option value="north">North Lot</option>
+                                <option value="south">South Lot</option>
+                                <option value="east">East Lot</option>
+                                <option value="west">West Lot</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-spot-type">Spot Type:</label>
+                            <select id="edit-spot-type">
+                                <option value="standard">Standard</option>
+                                <option value="handicapped">Handicapped</option>
+                                <option value="reserved">Reserved</option>
+                                <option value="electric">Electric Vehicle</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-spot-status">Status:</label>
+                            <select id="edit-spot-status">
+                                <option value="available">Available</option>
+                                <option value="occupied">Occupied</option>
+                                <option value="reserved">Reserved</option>
+                                <option value="maintenance">Maintenance</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="current-user-group">
+                            <label for="edit-current-user">Current User:</label>
+                            <input type="text" id="edit-current-user" readonly>
+                        </div>
+                        
+                        <div class="form-group" id="since-group">
+                            <label for="edit-since">Since:</label>
+                            <input type="text" id="edit-since" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-notes">Notes:</label>
+                            <textarea id="edit-notes" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button id="save-spot" class="btn primary">Save Changes</button>
+                        <button id="cancel-edit" class="btn secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-{% endfor %}
-<a href="{{ url_for('admin.add_parking_spot', lot_id=lot.id) }}">+ Add Spot</a>
-{% endblock %}
+
+    <footer>
+        <p>&copy; 2025 Vehicle Parking System. All rights reserved. | <a href="#">Admin Portal</a></p>
+    </footer>
+</body>
+</html>

@@ -1,26 +1,108 @@
-{% extends 'shared/base.html' %}
-{% block content %}
-<h2>Recent Parking History</h2>
-<table border="1">
-    <tr>
-        <th>Booking ID</th>
-        <th>Vehicle</th>
-        <th>Lot</th>
-        <th>Spot</th>
-        <th>From</th>
-        <th>To</th>
-        <th>Status</th>
-    </tr>
-    {% for record in bookings %}
-    <tr>
-        <td>{{ record.id }}</td>
-        <td>{{ record.vehicle_no }}</td>
-        <td>{{ record.lot_name }}</td>
-        <td>{{ record.spot_no }}</td>
-        <td>{{ record.start_time }}</td>
-        <td>{{ record.end_time or '-' }}</td>
-        <td>{{ record.status }}</td>
-    </tr>
-    {% endfor %}
-</table>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking History - Vehicle Parking System</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <script src="scripts/history.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Vehicle Parking System</h1>
+        <nav>
+            <ul>
+                <li><a href="user_dashboard.html">Dashboard</a></li>
+                <li><a href="book_parking.html">Book Parking</a></li>
+                <li><a href="history.html" class="active">History</a></li>
+                <li><a href="summary.html">Summary</a></li>
+                <li><a href="index.html">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="history-container">
+            <h2>Parking History</h2>
+            
+            <div class="filter-controls">
+                <div class="date-filter">
+                    <label for="start-date">From:</label>
+                    <input type="date" id="start-date" name="start-date">
+                    
+                    <label for="end-date">To:</label>
+                    <input type="date" id="end-date" name="end-date">
+                    
+                    <button id="filter-btn">Filter</button>
+                    <button id="reset-btn">Reset</button>
+                </div>
+            </div>
+
+            <div class="history-table">
+                <table id="parking-history">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Vehicle</th>
+                            <th>Slot</th>
+                            <th>Check-in Time</th>
+                            <th>Check-out Time</th>
+                            <th>Duration</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be populated via JavaScript -->
+                        <tr>
+                            <td>PK12345</td>
+                            <td>ABC123</td>
+                            <td>A-12</td>
+                            <td>2025-04-01 09:30</td>
+                            <td>2025-04-01 14:45</td>
+                            <td>5h 15m</td>
+                            <td>$15.75</td>
+                            <td><span class="status completed">Completed</span></td>
+                        </tr>
+                        <tr>
+                            <td>PK12346</td>
+                            <td>ABC123</td>
+                            <td>B-05</td>
+                            <td>2025-04-03 08:15</td>
+                            <td>2025-04-03 17:30</td>
+                            <td>9h 15m</td>
+                            <td>$27.75</td>
+                            <td><span class="status completed">Completed</span></td>
+                        </tr>
+                        <tr>
+                            <td>PK12347</td>
+                            <td>ABC123</td>
+                            <td>A-08</td>
+                            <td>2025-05-01 10:00</td>
+                            <td>--</td>
+                            <td>--</td>
+                            <td>--</td>
+                            <td><span class="status active">Active</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination">
+                <button id="prev-page" disabled>Previous</button>
+                <span id="page-info">Page 1 of 1</span>
+                <button id="next-page" disabled>Next</button>
+            </div>
+            
+            <div class="export-options">
+                <button id="export-pdf">Export as PDF</button>
+                <button id="export-csv">Export as CSV</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Vehicle Parking System. All rights reserved.</p>
+    </footer>
+</body>
+</html>

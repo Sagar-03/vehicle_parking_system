@@ -1,17 +1,110 @@
-{% extends 'shared/base.html' %}
-{% block content %}
-<h2>Release Parking Spot</h2>
-<form method="POST">
-    <label>Booking ID:</label>
-    <input type="text" name="booking_id" required><br>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Release Parking - Vehicle Parking System</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <script src="scripts/release_parking.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Vehicle Parking System</h1>
+        <nav>
+            <ul>
+                <li><a href="user_dashboard.html">Dashboard</a></li>
+                <li><a href="book_parking.html">Book Parking</a></li>
+                <li><a href="history.html">History</a></li>
+                <li><a href="summary.html">Summary</a></li>
+                <li><a href="index.html">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
 
-    <label>Vehicle Number:</label>
-    <input type="text" name="vehicle_no" required><br>
+    <main>
+        <section class="release-container">
+            <h2>Release Parking</h2>
+            
+            <div class="active-bookings">
+                <h3>Your Active Bookings</h3>
+                
+                <div class="booking-cards">
+                    <!-- Booking cards will be populated via JavaScript -->
+                    <div class="booking-card">
+                        <div class="booking-header">
+                            <h4>Booking #PK12347</h4>
+                            <span class="status active">Active</span>
+                        </div>
+                        <div class="booking-details">
+                            <p><strong>Vehicle:</strong> ABC123</p>
+                            <p><strong>Slot:</strong> A-08</p>
+                            <p><strong>Check-in:</strong> 2025-05-01 10:00</p>
+                            <p><strong>Duration:</strong> 3h 45m (and counting)</p>
+                            <p><strong>Current Amount:</strong> $11.25</p>
+                        </div>
+                        <div class="booking-actions">
+                            <button class="release-btn" data-booking-id="PK12347">Release Parking</button>
+                        </div>
+                    </div>
+                    
+                    <div class="booking-card">
+                        <div class="booking-header">
+                            <h4>Booking #PK12348</h4>
+                            <span class="status reserved">Reserved</span>
+                        </div>
+                        <div class="booking-details">
+                            <p><strong>Vehicle:</strong> XYZ789</p>
+                            <p><strong>Slot:</strong> C-15</p>
+                            <p><strong>Reserved for:</strong> 2025-05-05 15:00</p>
+                            <p><strong>Duration:</strong> 2h (planned)</p>
+                            <p><strong>Amount:</strong> $6.00 (estimated)</p>
+                        </div>
+                        <div class="booking-actions">
+                            <button class="cancel-btn" data-booking-id="PK12348">Cancel Reservation</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="release-confirmation" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h3>Confirm Parking Release</h3>
+                    <div id="release-details">
+                        <p><strong>Booking ID:</strong> <span id="modal-booking-id"></span></p>
+                        <p><strong>Vehicle:</strong> <span id="modal-vehicle"></span></p>
+                        <p><strong>Slot:</strong> <span id="modal-slot"></span></p>
+                        <p><strong>Check-in Time:</strong> <span id="modal-checkin"></span></p>
+                        <p><strong>Current Duration:</strong> <span id="modal-duration"></span></p>
+                        <p><strong>Final Amount:</strong> <span id="modal-amount"></span></p>
+                    </div>
+                    <div class="modal-actions">
+                        <button id="confirm-release">Confirm Release</button>
+                        <button id="cancel-release">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="payment-success" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h3>Payment Successful</h3>
+                    <div class="success-message">
+                        <p>Your parking has been successfully released. A receipt has been sent to your email.</p>
+                        <p><strong>Transaction ID:</strong> <span id="transaction-id"></span></p>
+                        <p><strong>Amount Paid:</strong> <span id="paid-amount"></span></p>
+                    </div>
+                    <div class="modal-actions">
+                        <button id="view-receipt">View Receipt</button>
+                        <button id="return-dashboard">Return to Dashboard</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
-    <label>Releasing Time:</label>
-    <input type="datetime-local" name="release_time" required><br>
-
-    <input type="submit" value="Release">
-</form>
-{% endblock %}
-
+    <footer>
+        <p>&copy; 2025 Vehicle Parking System. All rights reserved.</p>
+    </footer>
+</body>
+</html>

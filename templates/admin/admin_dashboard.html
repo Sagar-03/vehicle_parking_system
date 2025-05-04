@@ -1,14 +1,324 @@
 {% extends 'shared/base.html' %}
+
+{% block title %}Admin Dashboard - Vehicle Parking System{% endblock %}
+
 {% block content %}
-<h2>Welcome to Admin Dashboard</h2>
-<div>
-    <a href="{{ url_for('admin.add_parking_lot') }}">+ Add Lot</a>
-    <h3>Parking Lots</h3>
-    {% for lot in parking_lots %}
-        <div>
-            <p>{{ lot.name }} - {{ lot.total_spots }} spots</p>
-            <a href="{{ url_for('admin.view_parking_spot', lot_id=lot.id) }}">View</a>
-        </div>
-    {% endfor %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>Admin Dashboard</h2>
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab">Home</button>
+                <button class="nav-link" id="nav-users-tab" data-bs-toggle="tab" data-bs-target="#nav-users" type="button" role="tab">Users</button>
+                <button class="nav-link" id="nav-parking-tab" data-bs-toggle="tab" data-bs-target="#nav-parking" type="button" role="tab">Parking</button>
+                <button class="nav-link" id="nav-stats-tab" data-bs-toggle="tab" data-bs-target="#nav-stats" type="button" role="tab">Statistics</button>
+                <button class="nav-link" id="nav-logs-tab" data-bs-toggle="tab" data-bs-target="#nav-logs" type="button" role="tab">Logs</button>
+            </div>
+        </nav>
+    </div>
 </div>
+
+<div class="tab-content" id="nav-tabContent">
+    <!-- Home Tab -->
+    <div class="tab-pane fade show active" id="nav-home" role="tabpanel">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Parking Lots</h5>
+                        <h2 class="card-text">{{ parking_lot_count }}</h2>
+                        <a href="{{ url_for('admin.view_parking_spots') }}" class="btn btn-light">View Details</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Available Spots</h5>
+                        <h2 class="card-text">{{ available_spots }}</h2>
+                        <a href="{{ url_for('admin.view_parking_spots') }}" class="btn btn-light">View Details</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Occupied Spots</h5>
+                        <h2 class="card-text">{{ occupied_spots }}</h2>
+                        <a href="{{ url_for('admin.view_parking_spots') }}" class="btn btn-light">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Parking Overview</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="parking-grid">
+                            {% for spot in parking_spots %}
+                                <div class="parking-spot {% if spot.is_occupied %}occupied{% else %}available{% endif %}" 
+                                     data-spot-id="{{ spot.id }}">
+                                    {{ spot.spot_number }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Recent Activities</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            {% for activity in recent_activities %}
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <span>{{ activity.description }}</span>
+                                        <small class="text-muted">{{ activity.timestamp }}</small>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Tab -->
+    <div class="tab-pane fade" id="nav-users" role="tabpanel">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">User Management</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Registration Date</th>
+                                <th>Vehicle</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.created_at }}</td>
+                                    <td>{{ user.vehicle_model }} ({{ user.license_plate }})</td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('admin.view_user', user_id=user.id) }}" class="btn btn-sm btn-info">View</a>
+                                        <button class="btn btn-sm btn-danger btn-delete-user" data-user-id="{{ user.id }}">Delete</button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parking Tab -->
+    <div class="tab-pane fade" id="nav-parking" role="tabpanel">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Parking Lot Management</h5>
+                        <a href="{{ url_for('admin.add_parking_lot') }}" class="btn btn-light btn-sm">Add New Lot</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Location</th>
+                                        <th>Total Spots</th>
+                                        <th>Available</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for lot in parking_lots %}
+                                        <tr>
+                                            <td>{{ lot.id }}</td>
+                                            <td>{{ lot.name }}</td>
+                                            <td>{{ lot.location }}</td>
+                                            <td>{{ lot.total_spots }}</td>
+                                            <td>{{ lot.available_spots }}</td>
+                                            <td>
+                                                <a href="{{ url_for('admin.view_parking_lot', lot_id=lot.id) }}" class="btn btn-sm btn-info">View</a>
+                                                <button class="btn btn-sm btn-danger btn-delete-lot" data-lot-id="{{ lot.id }}">Delete</button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Current Parking Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="parking-grid large">
+                            {% for spot in parking_spots %}
+                                <div class="parking-spot {% if spot.is_occupied %}occupied{% else %}available{% endif %}" 
+                                     data-spot-id="{{ spot.id }}" data-bs-toggle="tooltip" 
+                                     title="{% if spot.is_occupied %}Occupied by {{ spot.user.username }}{% else %}Available{% endif %}">
+                                    {{ spot.spot_number }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Tab -->
+    <div class="tab-pane fade" id="nav-stats" role="tabpanel">
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Occupancy Rates</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="occupancyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Revenue Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Tab -->
+    <div class="tab-pane fade" id="nav-logs" role="tabpanel">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">System Logs</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in system_logs %}
+                                <tr>
+                                    <td>{{ log.timestamp }}</td>
+                                    <td>{{ log.user.username if log.user else 'System' }}</td>
+                                    <td>{{ log.action }}</td>
+                                    <td>{{ log.details }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Occupancy Chart
+    var occupancyCtx = document.getElementById('occupancyChart').getContext('2d');
+    var occupancyData = {
+        labels: {{ occupancy_dates|tojson }},
+        datasets: [{
+            label: 'Occupancy Rate (%)',
+            data: {{ occupancy_rates|tojson }},
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    };
+    var occupancyChart = new Chart(occupancyCtx, {
+        type: 'bar',
+        data: occupancyData,
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Revenue Chart
+    var revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    var revenueData = {
+        labels: {{ revenue_dates|tojson }},
+        datasets: [{
+            label: 'Daily Revenue ($)',
+            data: {{ daily_revenue|tojson }},
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+        }]
+    };
+    var revenueChart = new Chart(revenueCtx, {
+        type: 'line',
+        data: revenueData,
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}

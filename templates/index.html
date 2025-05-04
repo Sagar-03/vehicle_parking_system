@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to Vehicle Parking System{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content text-center">
+        <h1 class="display-3 fw-bold text-white mb-4">Welcome to Vehicle Parking System</h1>
+        <p class="lead text-white mb-5">The smart solution for efficient parking management</p>
+        <div class="hero-buttons">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-sign-in-alt me-2"></i>Login
+            </a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg">
+                <i class="fas fa-user-plus me-2"></i>Register
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="features mt-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Our Features</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h3>Easy Reservation</h3>
+                    <p>Book your parking spot with just a few clicks, anytime and anywhere.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <h3>Online Payment</h3>
+                    <p>Secure and hassle-free payment options for your convenience.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <h3>Spot Tracking</h3>
+                    <p>Real-time tracking of available parking spots at your preferred location.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="how-it-works mt-5 bg-light py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">How It Works</h2>
+        <div class="row">
+            <div class="col-md-3 mb-4">
+                <div class="step-card text-center">
+                    <div class="step-number">1</div>
+                    <h4>Register</h4>
+                    <p>Create your account in minutes</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="step-card text-center">
+                    <div class="step-number">2</div>
+                    <h4>Find Spot</h4>
+                    <p>Search for available parking spots</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="step-card text-center">
+                    <div class="step-number">3</div>
+                    <h4>Book & Pay</h4>
+                    <p>Reserve and pay online</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="step-card text-center">
+                    <div class="step-number">4</div>
+                    <h4>Park</h4>
+                    <p>Arrive and park with ease</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="cta-section mt-5">
+    <div class="container">
+        <div class="cta-card">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3 class="mb-3">Ready to simplify your parking experience?</h3>
+                    <p class="mb-0">Join thousands of satisfied users who save time and money with our system.</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg">Get Started Now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,11 +1,160 @@
 {% extends 'shared/base.html' %}
+
+{% block title %}Add Parking Lot - Vehicle Parking System{% endblock %}
+
 {% block content %}
-<h2>Add Parking Lot</h2>
-<form method="POST">
-    <input name="name" placeholder="Lot Name" required>
-    <input name="address" placeholder="Address" required>
-    <input name="price_per_hour" type="number" placeholder="Price/hour" required>
-    <input name="total_spots" type="number" placeholder="Total Spots" required>
-    <button type="submit">Add</button>
-</form>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title text-center mb-0">Add New Parking Lot</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.add_parking_lot') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Parking Lot Name:</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="location" class="form-label">Location:</label>
+                            <input type="text" class="form-control" id="location" name="location" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="total_spots" class="form-label">Total Parking Spots:</label>
+                            <input type="number" class="form-control" id="total_spots" name="total_spots" min="1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="hourly_rate" class="form-label">Hourly Rate ($):</label>
+                            <input type="number" class="form-control" id="hourly_rate" name="hourly_rate" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="opening_time" class="form-label">Opening Time:</label>
+                            <input type="time" class="form-control" id="opening_time" name="opening_time" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="closing_time" class="form-label">Closing Time:</label>
+                            <input type="time" class="form-control" id="closing_time" name="closing_time" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description:</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                            <label class="form-check-label" for="is_active">
+                                Active
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h5>Parking Spot Layout</h5>
+                            <p class="text-muted">Design your parking lot layout by configuring rows and columns</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="num_rows" class="form-label">Number of Rows:</label>
+                            <input type="number" class="form-control" id="num_rows" name="num_rows" min="1" value="5" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="num_cols" class="form-label">Spots per Row:</label>
+                            <input type="number" class="form-control" id="num_cols" name="num_cols" min="1" value="10" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Preview Layout</h6>
+                        <div id="layout_preview" class="parking-grid-layout mb-3">
+                            <!-- JavaScript will generate the layout preview here -->
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Add Parking Lot</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Generate layout preview
+    function generateLayoutPreview() {
+        const numRows = parseInt(document.getElementById('num_rows').value) || 5;
+        const numCols = parseInt(document.getElementById('num_cols').value) || 10;
+        const totalSpots = parseInt(document.getElementById('total_spots').value) || (numRows * numCols);
+        
+        const layoutPreview = document.getElementById('layout_preview');
+        layoutPreview.innerHTML = '';
+        
+        let spotCount = 1;
+        
+        for (let i = 0; i < numRows; i++) {
+            const row = document.createElement('div');
+            row.className = 'parking-row';
+            
+            for (let j = 0; j < numCols; j++) {
+                if (spotCount <= totalSpots) {
+                    const spot = document.createElement('div');
+                    spot.className = 'parking-spot preview';
+                    spot.textContent = spotCount;
+                    row.appendChild(spot);
+                    spotCount++;
+                }
+            }
+            
+            layoutPreview.appendChild(row);
+        }
+    }
+    
+    // Event listeners for layout changes
+    document.getElementById('num_rows').addEventListener('input', generateLayoutPreview);
+    document.getElementById('num_cols').addEventListener('input', generateLayoutPreview);
+    document.getElementById('total_spots').addEventListener('input', generateLayoutPreview);
+    
+    // Initialize the layout preview
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set default times
+        document.getElementById('opening_time').value = '08:00';
+        document.getElementById('closing_time').value = '20:00';
+        
+        // Generate initial layout preview
+        generateLayoutPreview();
+        
+        // Update total spots when rows or columns change
+        document.getElementById('num_rows').addEventListener('change', function() {
+            const numRows = parseInt(this.value) || 5;
+            const numCols = parseInt(document.getElementById('num_cols').value) || 10;
+            document.getElementById('total_spots').value = numRows * numCols;
+            generateLayoutPreview();
+        });
+        
+        document.getElementById('num_cols').addEventListener('change', function() {
+            const numRows = parseInt(document.getElementById('num_rows').value) || 5;
+            const numCols = parseInt(this.value) || 10;
+            document.getElementById('total_spots').value = numRows * numCols;
+            generateLayoutPreview();
+        });
+    });
+</script>
 {% endblock %}

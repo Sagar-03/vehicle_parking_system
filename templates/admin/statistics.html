@@ -1,16 +1,313 @@
-{% extends 'shared/base.html' %}
-{% block content %}
-<h2>Statistics</h2>
-<div>
-    <h3>Overview</h3>
-    <p>Total Users: {{ stats.total_users }}</p>
-    <p>Total Bookings: {{ stats.total_bookings }}</p>
-    <p>Total Parking Lots: {{ stats.total_lots }}</p>
-</div>
-<div>
-    <h3>Charts</h3>
-    <img src="{{ url_for('static', filename='charts/pie.png') }}" alt="Pie Chart">
-    <img src="{{ url_for('static', filename='charts/bar.png') }}" alt="Bar Chart">
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking Statistics - Admin Dashboard</title>
+    <link rel="stylesheet" href="../shared/styles/admin.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
+    <script src="scripts/statistics.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Vehicle Parking System - Admin</h1>
+        <div class="user-info">
+            <span>Admin: <span id="admin-name">John Doe</span></span>
+            <a href="login.html" class="logout-btn">Logout</a>
+        </div>
+    </header>
 
+    <div class="container">
+        <nav class="sidebar">
+            <ul>
+                <li><a href="admin_dashboard.html">Dashboard</a></li>
+                <li><a href="add_parking_lot.html">Add Parking Lot</a></li>
+                <li><a href="view_parking_spot.html">View Parking Spots</a></li>
+                <li><a href="view_user.html">View Users</a></li>
+                <li><a href="statistics.html" class="active">Statistics</a></li>
+                <li><a href="../index.html">Main Site</a></li>
+            </ul>
+        </nav>
+
+        <main class="content">
+            <h2>Parking Statistics</h2>
+
+            <div class="statistics-controls">
+                <div class="time-period-selector">
+                    <label for="time-period">Select Time Period:</label>
+                    <select id="time-period">
+                        <option value="daily">Daily</option>
+                        <option value="weekly" selected>Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+
+                <div class="date-range">
+                    <label for="start-date">From:</label>
+                    <input type="date" id="start-date">
+                    
+                    <label for="end-date">To:</label>
+                    <input type="date" id="end-date">
+                    
+                    <button id="apply-date-range">Apply</button>
+                </div>
+            </div>
+
+            <div class="statistics-grid">
+                <div class="stat-card">
+                    <h3>Total Revenue</h3>
+                    <div class="stat-value">$12,450.75</div>
+                    <div class="stat-change positive">+8.5% from previous period</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Total Bookings</h3>
+                    <div class="stat-value">1,245</div>
+                    <div class="stat-change positive">+12.3% from previous period</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Average Occupancy</h3>
+                    <div class="stat-value">78.5%</div>
+                    <div class="stat-change positive">+3.2% from previous period</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Peak Hours</h3>
+                    <div class="stat-value">10 AM - 2 PM</div>
+                    <div class="stat-note">Monday - Friday</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-wrapper">
+                    <h3>Revenue and Parking Statistics</h3>
+                    <div class="chart-tabs">
+                        <button class="chart-tab active" data-chart="revenue">Revenue</button>
+                        <button class="chart-tab" data-chart="occupancy">Occupancy</button>
+                        <button class="chart-tab" data-chart="bookings">Bookings</button>
+                    </div>
+                    <div class="chart-area">
+                        <canvas id="main-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-row">
+                <div class="chart-wrapper half-width">
+                    <h3>Parking Lots Usage</h3>
+                    <div class="chart-area">
+                        <canvas id="parking-usage-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-wrapper half-width">
+                    <h3>Hourly Parking Distribution</h3>
+                    <div class="chart-area">
+                        <canvas id="hourly-distribution-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-table-section">
+                <h3>Detailed Statistics</h3>
+                <table class="data-table" id="statistics-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Parking Lot</th>
+                            <th>Total Bookings</th>
+                            <th>Avg. Duration</th>
+                            <th>Revenue</th>
+                            <th>Occupancy Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Sample data, will be populated with JavaScript -->
+                        <tr>
+                            <td>May 1, 2025</td>
+                            <td>North Lot</td>
+                            <td>145</td>
+                            <td>3.5 hrs</td>
+                            <td>$1,232.50</td>
+                            <td>82%</td>
+                        </tr>
+                        <tr>
+                            <td>May 2, 2025</td>
+                            <td>North Lot</td>
+                            <td>132</td>
+                            <td>3.2 hrs</td>
+                            <td>$1,105.75</td>
+                            <td>78%</td>
+                        </tr>
+                        <tr>
+                            <td>May 3, 2025</td>
+                            <td>North Lot</td>
+                            <td>98</td>
+                            <td>4.1 hrs</td>
+                            <td>$987.25</td>
+                            <td>65%</td>
+                        </tr>
+                        <tr>
+                            <td>May 1, 2025</td>
+                            <td>South Lot</td>
+                            <td>112</td>
+                            <td>2.8 hrs</td>
+                            <td>$875.50</td>
+                            <td>74%</td>
+                        </tr>
+                        <tr>
+                            <td>May 2, 2025</td>
+                            <td>South Lot</td>
+                            <td>125</td>
+                            <td>3.0 hrs</td>
+                            <td>$942.25</td>
+                            <td>83%</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="export-options">
+                    <button id="export-pdf">Export as PDF</button>
+                    <button id="export-csv">Export as CSV</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Vehicle Parking System. All rights reserved. | <a href="#">Admin Portal</a></p>
+    </footer>
+
+    <script>
+        // Initialize charts with sample data
+        document.addEventListener('DOMContentLoaded', function() {
+            // Main chart
+            const mainCtx = document.getElementById('main-chart').getContext('2d');
+            const mainChart = new Chart(mainCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Revenue ($)',
+                        data: [3250, 3750, 4200, 4500],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Amount ($)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Parking usage chart (circular)
+            const usageCtx = document.getElementById('parking-usage-chart').getContext('2d');
+            const usageChart = new Chart(usageCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['North Lot', 'South Lot', 'East Lot', 'West Lot'],
+                    datasets: [{
+                        data: [42, 30, 18, 10],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(255, 159, 64, 0.6)',
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(153, 102, 255, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(255, 159, 64, 1)',
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(153, 102, 255, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+
+            // Hourly distribution chart (bar)
+            const hourlyCtx = document.getElementById('hourly-distribution-chart').getContext('2d');
+            const hourlyChart = new Chart(hourlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['6AM', '8AM', '10AM', '12PM', '2PM', '4PM', '6PM', '8PM', '10PM'],
+                    datasets: [{
+                        label: 'Parking Count',
+                        data: [42, 85, 95, 90, 85, 80, 70, 55, 30],
+                        backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Vehicles'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Tab switching logic
+            const chartTabs = document.querySelectorAll('.chart-tab');
+            chartTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    chartTabs.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Update chart data based on selected tab
+                    const chartType = this.dataset.chart;
+                    switch(chartType) {
+                        case 'revenue':
+                            mainChart.data.datasets[0].label = 'Revenue ($)';
+                            mainChart.data.datasets[0].data = [3250, 3750, 4200, 4500];
+                            mainChart.data.datasets[0].borderColor = 'rgba(54, 162, 235, 1)';
+                            mainChart.data.datasets[0].backgroundColor = 'rgba(54, 162, 235, 0.2)';
+                            break;
+                        case 'occupancy':
+                            mainChart.data.datasets[0].label = 'Occupancy Rate (%)';
+                            mainChart.data.datasets[0].data = [68, 75, 82, 79];
+                            mainChart.data.datasets[0].borderColor = 'rgba(75, 192, 192, 1)';
+                            mainChart.data.datasets[0].backgroundColor = 'rgba(75, 192, 192, 0.2)';
+                            break;
+                        case 'bookings':
+                            mainChart.data.datasets[0].label = 'Number of Bookings';
+                            mainChart.data.datasets[0].data = [285, 310, 345, 375];
+                            mainChart.data.datasets[0].borderColor = 'rgba(255, 99, 132, 1)';
+                            mainChart.data.datasets[0].backgroundColor = 'rgba(255, 99, 132, 0.2)';
+                            break;
+                    }
+                    mainChart.update();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
