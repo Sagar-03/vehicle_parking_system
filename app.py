@@ -29,13 +29,9 @@ def create_app():
     # Initialize plugins
     db.init_app(app)
     login_manager.init_app(app)
-    login_manager.login_view = 'user_bp.login'  # Set login view for redirect
+    login_manager.login_view = 'auth.login'  # Set login view for redirect
     login_manager.login_message = "Please log in to access this page."
     login_manager.login_message_category = "info"
-    
-    # Import models
-    with app.app_context():
-        from models import Admin, User, ParkingLot, ParkingSpot, Booking
     
     # Register blueprints
     from routes.admin_routes import admin_bp
@@ -44,8 +40,40 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(user_bp, url_prefix='/user')
     
+    # Create an auth blueprint for login/register
+    from flask import Blueprint
+    auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+    
+    @auth_bp.route('/login', methods=['GET', 'POST'])
+    def login():
+        # Redirect to appropriate login page based on user type
+        if request.args.get('type') == 'admin':
+            return redirect(url_for('admin.login'))
+        else:
+            return redirect(url_for('user.login'))
+    
+    @auth_bp.route('/register', methods=['GET', 'POST'])
+    def register():
+        return redirect(url_for('user.register'))
+    
+    @auth_bp.route('/logout')
+    def logout():
+        if isinstance(current_user, Admin):
+            return redirect(url_for('admin.logout'))
+        else:
+            return redirect(url_for('user.logout'))
+    
+    app.register_blueprint(auth_bp)
+    
     # Create database tables and seed data within app context
     with app.app_context():
+        # Import models here to avoid circular imports
+        from models.admin import Admin
+        from models.user import User
+        from models.parking_lot import ParkingLot
+        from models.parking_spot import ParkingSpot
+        from models.booking import Booking
+        
         db.create_all()
         
         # Create admin user if not exists
@@ -57,29 +85,29 @@ def create_app():
             print("Admin user created successfully")
         
         # Create test user if not exists (for development)
-        if app.config.get('FLASK_ENV') == 'development':
-            test_user = User.query.filter_by(username='user').first()
-            if not test_user:
-                test_user = User(
-                    username='user',
-                    email='user@example.com',
-                    password='user123',
-                    first_name='Test',
-                    last_name='User',
-                    phone='1234567890'
-                )
-                db.session.add(test_user)
-                db.session.commit()
-                print("Test user created successfully")
+        test_user = User.query.filter_by(username='user').first()
+        if not test_user:
+            test_user = User(
+                username='user',
+                email='user@example.com',
+                password='user123',
+                first_name='Test',
+                last_name='User',
+                phone='1234567890'
+            )
+            db.session.add(test_user)
+            db.session.commit()
+            print("Test user created successfully")
         
         # Create sample parking lot if not exists (for development)
-        if app.config.get('FLASK_ENV') == 'development' and not ParkingLot.query.first():
+        if not ParkingLot.query.first():
             # Create a sample parking lot
             parking_lot = ParkingLot(
                 name='Main Street Parking',
                 address='123 Main Street',
                 pin_code='10001',
-                postcode_level='Downtown',
+                price=2.50,  # Using price parameter which will set hourly_rate internally
+                total_spots=10,
                 available_spots=10
             )
             db.session.add(parking_lot)
@@ -94,10 +122,9 @@ def create_app():
                     spot_type = 'electric'
                 
                 spot = ParkingSpot(
-                    spot_id=f'A-{i}',
-                    parking_lot_id=parking_lot.id,
-                    spot_type=spot_type,
-                    is_available=True
+                    lot_id=parking_lot.id,
+                    spot_number=i,
+                    spot_type=spot_type
                 )
                 db.session.add(spot)
             db.session.commit()
@@ -108,30 +135,36 @@ def create_app():
     def index():
         if current_user.is_authenticated:
             if isinstance(current_user, Admin):
-                return redirect(url_for('admin_bp.dashboard'))
+                return redirect(url_for('admin.dashboard'))
             else:
-                return redirect(url_for('user_bp.dashboard'))
-        return render_template('shared/base.html')
+                return redirect(url_for('user.dashboard'))
+        return render_template('index.html')
     
-    # Authentication routes
-    @app.route('/login', methods=['GET', 'POST'])
-    def login():
-        # Check if user is trying to login as admin
-        if 'admin' in request.path or request.args.get('type') == 'admin':
-            return redirect(url_for('admin_bp.login'))
-        else:
-            return redirect(url_for('user_bp.login'))
+    # Add routes for the main sections accessible without login
+    @app.route('/about')
+    def about():
+        return render_template('about.html')
+        
+    @app.route('/contact')
+    def contact():
+        return render_template('contact.html')
     
-    @app.route('/register', methods=['GET', 'POST'])
-    def register():
-        return redirect(url_for('user_bp.register'))
+    # Create blueprint for main pages
+    main_bp = Blueprint('main', __name__)
     
-    @app.route('/logout')
-    def logout():
-        if 'admin' in request.path or request.args.get('type') == 'admin':
-            return redirect(url_for('admin_bp.logout'))
-        else:
-            return redirect(url_for('user_bp.logout'))
+    @main_bp.route('/index')
+    def index():
+        return render_template('index.html')
+    
+    @main_bp.route('/about')
+    def about():
+        return render_template('about.html')
+        
+    @main_bp.route('/contact')
+    def contact():
+        return render_template('contact.html')
+    
+    app.register_blueprint(main_bp)
     
     # Error handlers
     @app.errorhandler(404)

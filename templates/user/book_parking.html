@@ -3,81 +3,165 @@
 {% block title %}Book Parking - Vehicle Parking System{% endblock %}
 
 {% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>Book a Parking Spot</h2>
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <a class="nav-link" href="{{ url_for('user.dashboard') }}">Dashboard</a>
+                <a class="nav-link active" href="{{ url_for('user.book_parking') }}">Book Parking</a>
+                <a class="nav-link" href="{{ url_for('user.vehicles') }}">My Vehicles</a>
+                <a class="nav-link" href="{{ url_for('user.search_parking') }}">Find Parking</a>
+                <a class="nav-link" href="{{ url_for('user.history') }}">History</a>
+                <a class="nav-link" href="{{ url_for('user.summary') }}">Summary</a>
+            </div>
+        </nav>
+    </div>
+</div>
+
 <div class="row justify-content-center">
-    <div class="col-md-10">
+    <div class="col-md-12">
         <div class="card shadow">
             <div class="card-header bg-primary text-white">
-                <h3 class="card-title text-center mb-0">Book a Parking Spot</h3>
+                <h4 class="card-title text-center mb-0">Book a Parking Spot</h4>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6">
-                        <form method="POST" action="{{ url_for('user.book_parking') }}">
-                            {{ form.hidden_tag() }}
-                            
-                            <div class="mb-3">
-                                <label for="parking_lot_id" class="form-label">Select Parking Lot:</label>
-                                <select class="form-select" id="parking_lot_id" name="parking_lot_id" required>
-                                    <option value="">-- Select Parking Lot --</option>
-                                    {% for lot in parking_lots %}
-                                        <option value="{{ lot.id }}">{{ lot.name }} ({{ lot.available_spots }} spots available)</option>
-                                    {% endfor %}
-                                </select>
+                    <div class="col-md-5">
+                        <div class="card mb-4 h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title mb-0">Booking Details</h5>
                             </div>
-                            
-                            <div class="mb-3">
-                                <label for="vehicle_id" class="form-label">Select Vehicle:</label>
-                                <select class="form-select" id="vehicle_id" name="vehicle_id" required>
-                                    <option value="">-- Select Vehicle --</option>
-                                    {% for vehicle in user_vehicles %}
-                                        <option value="{{ vehicle.id }}">{{ vehicle.model }} ({{ vehicle.license_plate }})</option>
-                                    {% endfor %}
-                                </select>
+                            <div class="card-body">
+                                <form method="POST" action="{{ url_for('user.book_parking') }}" id="bookingForm">
+                                    <div class="mb-3">
+                                        <label for="parking_lot_id" class="form-label">Select Parking Lot:</label>
+                                        <select class="form-select" id="parking_lot_id" name="parking_lot_id" required>
+                                            <option value="">-- Select Parking Lot --</option>
+                                            {% for lot in parking_lots %}
+                                                <option value="{{ lot.id }}" {% if request.args.get('lot_id') == lot.id|string %}selected{% endif %}>
+                                                    {{ lot.name }} ({{ lot.available_spots }} spots available) - ${{ lot.price }}/hr
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="vehicle_id" class="form-label">Select Vehicle:</label>
+                                        <div class="vehicle-selector">
+                                            {% if user_vehicles %}
+                                                {% for vehicle in user_vehicles %}
+                                                <div class="form-check vehicle-option mb-2 border rounded p-2">
+                                                    <input class="form-check-input" type="radio" name="vehicle_id" 
+                                                           id="vehicle_{{ vehicle.id }}" value="{{ vehicle.id }}" 
+                                                           {% if loop.first %}checked{% endif %} required>
+                                                    <label class="form-check-label w-100" for="vehicle_{{ vehicle.id }}">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <strong>{{ vehicle.model }}</strong> ({{ vehicle.license_plate }})
+                                                                <br>
+                                                                <small class="text-muted">{{ vehicle.vehicle_type|capitalize }}{% if vehicle.color %} • {{ vehicle.color }}{% endif %}</small>
+                                                            </div>
+                                                            <div class="vehicle-icon">
+                                                                {% if vehicle.vehicle_type == 'compact' %}
+                                                                <i class="bi bi-car-front text-info"></i>
+                                                                {% elif vehicle.vehicle_type == 'suv' %}
+                                                                <i class="bi bi-truck text-success"></i>
+                                                                {% elif vehicle.vehicle_type == 'electric' %}
+                                                                <i class="bi bi-lightning-charge text-warning"></i>
+                                                                {% else %}
+                                                                <i class="bi bi-car-front"></i>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                                {% endfor %}
+                                                <div class="text-end mt-2">
+                                                    <a href="{{ url_for('user.vehicles') }}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-plus-circle"></i> Add Another Vehicle
+                                                    </a>
+                                                </div>
+                                            {% else %}
+                                                <div class="alert alert-info">
+                                                    <p>You don't have any vehicles registered.</p>
+                                                    <a href="{{ url_for('user.vehicles') }}" class="btn btn-primary">Add a Vehicle</a>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="duration" class="form-label">Estimated Duration (hours):</label>
+                                        <input type="number" class="form-control" id="duration" name="duration" min="1" max="24" value="1" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="entry_time" class="form-label">Entry Time:</label>
+                                        <input type="datetime-local" class="form-control" id="entry_time" name="entry_time" required>
+                                    </div>
+                                    
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary" id="findSpotsBtn">Find Available Spots</button>
+                                    </div>
+                                </form>
                             </div>
-                            
-                            <div class="mb-3">
-                                <label for="duration" class="form-label">Estimated Duration (hours):</label>
-                                <input type="number" class="form-control" id="duration" name="duration" min="1" max="24" value="1" required>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="entry_time" class="form-label">Entry Time:</label>
-                                <input type="datetime-local" class="form-control" id="entry_time" name="entry_time" required>
-                            </div>
-                            
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary">Find Available Spots</button>
-                            </div>
-                        </form>
+                        </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-7">
                         <div class="card h-100">
                             <div class="card-header bg-light">
                                 <h5 class="card-title mb-0">Available Parking Spots</h5>
                             </div>
                             <div class="card-body">
                                 {% if available_spots %}
-                                    <div class="parking-grid mb-3">
-                                        {% for spot in available_spots %}
-                                            <div class="parking-spot available" data-spot-id="{{ spot.id }}">
-                                                {{ spot.spot_number }}
+                                    <div class="mb-3">
+                                        <div class="alert alert-success">
+                                            <strong>{{ available_spots|length }}</strong> spot{{ 's' if available_spots|length != 1 else '' }} available at 
+                                            <strong>{{ available_spots[0].parking_lot.name }}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="parking-grid mb-4">
+                                        <div class="row">
+                                            {% for spot in available_spots %}
+                                                <div class="col-md-3 col-4 mb-3">
+                                                    <div class="parking-spot available" data-spot-id="{{ spot.id }}" data-spot-number="{{ spot.spot_number }}">
+                                                        <div class="spot-content">
+                                                            <div class="spot-number">{{ spot.spot_number }}</div>
+                                                            <div class="spot-type">{{ spot.spot_type|capitalize }}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="card mb-3">
+                                        <div class="card-body bg-light">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <p class="mb-1">Selected Spot: <strong><span id="selected_spot_display">None</span></strong></p>
+                                                    <p class="mb-1">Spot Type: <strong><span id="selected_spot_type">-</span></strong></p>
+                                                </div>
+                                                <div class="col-md-6 text-md-end">
+                                                    <p class="mb-1">Duration: <strong><span id="duration_display">1</span> hours</strong></p>
+                                                    <p class="mb-1">Estimated Fee: <strong>$<span id="estimated_fee">0.00</span></strong></p>
+                                                </div>
                                             </div>
-                                        {% endfor %}
+                                        </div>
                                     </div>
-                                    <div class="text-center mb-3">
-                                        <p>Selected Spot: <span id="selected_spot_display">None</span></p>
-                                        <p>Estimated Fee: <span id="estimated_fee">$0.00</span></p>
-                                    </div>
-                                    <form method="POST" action="{{ url_for('user.confirm_booking') }}">
-                                        {{ confirmation_form.hidden_tag() }}
+                                    <form method="POST" action="{{ url_for('user.book_parking') }}" id="confirmationForm">
                                         <input type="hidden" name="spot_id" id="selected_spot_id" value="">
+                                        <input type="hidden" name="vehicle_id" id="confirm_vehicle_id" value="">
+                                        <input type="hidden" name="duration" id="confirm_duration" value="1">
+                                        <input type="hidden" name="entry_time" id="confirm_entry_time" value="">
                                         <div class="d-grid">
                                             <button type="submit" class="btn btn-success" id="confirm_btn" disabled>Confirm Booking</button>
                                         </div>
                                     </form>
                                 {% else %}
                                     <div class="text-center py-5">
-                                        <p>Please select a parking lot to view available spots</p>
+                                        <i class="bi bi-car-front-fill" style="font-size: 3rem;"></i>
+                                        <p class="mt-3">Please select a parking lot to view available spots</p>
                                     </div>
                                 {% endif %}
                             </div>
@@ -90,6 +174,53 @@
 </div>
 {% endblock %}
 
+{% block styles %}
+<style>
+    .parking-spot {
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        padding: 15px 10px;
+        text-align: center;
+        cursor: pointer;
+        height: 100%;
+        transition: all 0.2s;
+    }
+    
+    .parking-spot.available {
+        border-color: #28a745;
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+    
+    .parking-spot.active {
+        border-color: #007bff;
+        background-color: rgba(0, 123, 255, 0.2);
+        transform: scale(1.05);
+    }
+    
+    .spot-number {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    
+    .spot-type {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .vehicle-selector .vehicle-option:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    
+    .vehicle-selector .form-check-input:checked + .form-check-label {
+        font-weight: bold;
+    }
+    
+    .vehicle-icon {
+        font-size: 1.5rem;
+    }
+</style>
+{% endblock %}
+
 {% block scripts %}
 <script>
     // Set default entry time to current time
@@ -97,8 +228,11 @@
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
         document.getElementById('entry_time').value = now.toISOString().slice(0, 16);
+        
+        // Update confirm form with initial values
+        updateConfirmForm();
     });
-
+    
     // Handle parking spot selection
     document.querySelectorAll('.parking-spot.available').forEach(spot => {
         spot.addEventListener('click', function() {
@@ -112,28 +246,56 @@
             
             // Update hidden input with selected spot ID
             const spotId = this.getAttribute('data-spot-id');
+            const spotNumber = this.getAttribute('data-spot-number');
+            const spotType = this.querySelector('.spot-type').textContent;
+            
             document.getElementById('selected_spot_id').value = spotId;
-            document.getElementById('selected_spot_display').textContent = this.textContent.trim();
+            document.getElementById('selected_spot_display').textContent = spotNumber;
+            document.getElementById('selected_spot_type').textContent = spotType;
             
             // Calculate estimated fee
-            const duration = document.getElementById('duration').value;
-            const hourlyRate = 2.50; // This should come from the backend
-            const estimatedFee = (duration * hourlyRate).toFixed(2);
-            document.getElementById('estimated_fee').textContent = '$' + estimatedFee;
+            updateEstimatedFee();
             
             // Enable confirm button
             document.getElementById('confirm_btn').disabled = false;
+            
+            // Update confirm form with current values
+            updateConfirmForm();
         });
     });
-
+    
     // Update fee when duration changes
     document.getElementById('duration').addEventListener('change', function() {
-        if (document.querySelector('.parking-spot.active')) {
-            const duration = this.value;
-            const hourlyRate = 2.50; // This should come from the backend
-            const estimatedFee = (duration * hourlyRate).toFixed(2);
-            document.getElementById('estimated_fee').textContent = '$' + estimatedFee;
-        }
+        document.getElementById('duration_display').textContent = this.value;
+        updateEstimatedFee();
+        updateConfirmForm();
+    });
+    
+    // Update the estimated fee
+    function updateEstimatedFee() {
+        const duration = document.getElementById('duration').value;
+        const parkingLotSelect = document.getElementById('parking_lot_id');
+        const selectedOption = parkingLotSelect.options[parkingLotSelect.selectedIndex];
+        const hourlyRate = selectedOption ? parseFloat(selectedOption.textContent.match(/\$([0-9.]+)\/hr/)[1]) : 0;
+        
+        const estimatedFee = (duration * hourlyRate).toFixed(2);
+        document.getElementById('estimated_fee').textContent = estimatedFee;
+    }
+    
+    // Update the confirmation form with values from the booking form
+    function updateConfirmForm() {
+        const vehicleId = document.querySelector('input[name="vehicle_id"]:checked')?.value;
+        const duration = document.getElementById('duration').value;
+        const entryTime = document.getElementById('entry_time').value;
+        
+        document.getElementById('confirm_vehicle_id').value = vehicleId || '';
+        document.getElementById('confirm_duration').value = duration;
+        document.getElementById('confirm_entry_time').value = entryTime;
+    }
+    
+    // Update confirm form when vehicle selection changes
+    document.querySelectorAll('input[name="vehicle_id"]').forEach(radio => {
+        radio.addEventListener('change', updateConfirmForm);
     });
 </script>
 {% endblock %}

@@ -1,248 +1,440 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Usage Summary - Vehicle Parking System</title>
-    <link rel="stylesheet" href="styles/main.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
-    <script src="scripts/summary.js" defer></script>
-</head>
-<body>
-    <header>
-        <h1>Vehicle Parking System</h1>
-        <nav>
-            <ul>
-                <li><a href="user_dashboard.html">Dashboard</a></li>
-                <li><a href="book_parking.html">Book Parking</a></li>
-                <li><a href="history.html">History</a></li>
-                <li><a href="summary.html" class="active">Summary</a></li>
-                <li><a href="index.html">Logout</a></li>
-            </ul>
-        </nav>
-    </header>
+{% extends 'shared/base.html' %}
 
-    <main>
-        <section class="summary-container">
-            <h2>Your Parking Usage Summary</h2>
-            
-            <div class="date-range-selector">
-                <label for="summary-period">Select Period:</label>
-                <select id="summary-period">
-                    <option value="week">Last 7 Days</option>
-                    <option value="month" selected>Last 30 Days</option>
-                    <option value="quarter">Last 3 Months</option>
-                    <option value="year">Last 12 Months</option>
-                    <option value="custom">Custom Range</option>
-                </select>
-                
-                <div id="custom-date-range" class="hidden">
-                    <label for="custom-start">From:</label>
-                    <input type="date" id="custom-start">
-                    
-                    <label for="custom-end">To:</label>
-                    <input type="date" id="custom-end">
-                    
-                    <button id="apply-custom">Apply</button>
+{% block title %}Usage Summary - Vehicle Parking System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>Your Parking Usage Summary</h2>
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <a class="nav-link" href="{{ url_for('user.dashboard') }}">Dashboard</a>
+                <a class="nav-link" href="{{ url_for('user.book_parking') }}">Book Parking</a>
+                <a class="nav-link" href="{{ url_for('user.vehicles') }}">My Vehicles</a>
+                <a class="nav-link" href="{{ url_for('user.search_parking') }}">Find Parking</a>
+                <a class="nav-link" href="{{ url_for('user.history') }}">History</a>
+                <a class="nav-link active" href="{{ url_for('user.summary') }}">Summary</a>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Usage Period</h5>
+                <div>
+                    <select id="summary-period" class="form-select form-select-sm">
+                        <option value="week">Last 7 Days</option>
+                        <option value="month" selected>Last 30 Days</option>
+                        <option value="quarter">Last 3 Months</option>
+                        <option value="year">Last 12 Months</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
                 </div>
             </div>
-            
-            <div class="summary-stats">
-                <div class="stat-card">
-                    <h3>Total Bookings</h3>
-                    <p class="stat-value">24</p>
-                    <p class="stat-change positive">+12% from previous period</p>
+            <div class="card-body">
+                <div id="custom-date-range" class="row g-3 mb-3" style="display: none;">
+                    <div class="col-md-4">
+                        <label for="custom-start" class="form-label">From Date:</label>
+                        <input type="date" class="form-control" id="custom-start">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="custom-end" class="form-label">To Date:</label>
+                        <input type="date" class="form-control" id="custom-end">
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button id="apply-custom" class="btn btn-primary">Apply Range</button>
+                    </div>
                 </div>
                 
-                <div class="stat-card">
-                    <h3>Total Hours</h3>
-                    <p class="stat-value">87.5</p>
-                    <p class="stat-change positive">+5% from previous period</p>
-                </div>
-                
-                <div class="stat-card">
-                    <h3>Total Spent</h3>
-                    <p class="stat-value">$262.50</p>
-                    <p class="stat-change positive">+8% from previous period</p>
-                </div>
-                
-                <div class="stat-card">
-                    <h3>Avg. Duration</h3>
-                    <p class="stat-value">3.6 hrs</p>
-                    <p class="stat-change negative">-5% from previous period</p>
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Bookings</h5>
+                                <h1 class="display-4">{{ total_bookings }}</h1>
+                                <p class="text-muted">Parking sessions</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Hours</h5>
+                                <h1 class="display-4">{{ total_hours }}</h1>
+                                <p class="text-muted">Hours parked</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-info">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Spent</h5>
+                                <h1 class="display-4">${{ total_spent }}</h1>
+                                <p class="text-muted">On parking fees</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-warning">
+                            <div class="card-body">
+                                <h5 class="card-title">Avg. Duration</h5>
+                                <h1 class="display-4">{{ avg_duration }}</h1>
+                                <p class="text-muted">Hours per session</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <div class="charts-container">
-                <div class="chart-wrapper">
-                    <h3>Parking Usage by Day</h3>
-                    <canvas id="usage-by-day-chart"></canvas>
-                </div>
-                
-                <div class="chart-wrapper">
-                    <h3>Parking Cost by Day</h3>
-                    <canvas id="cost-by-day-chart"></canvas>
-                </div>
-                
-                <div class="chart-wrapper">
-                    <h3>Most Used Parking Areas</h3>
-                    <canvas id="area-usage-chart"></canvas>
-                </div>
-                
-                <div class="chart-wrapper">
-                    <h3>Parking by Time of Day</h3>
-                    <canvas id="time-of-day-chart"></canvas>
-                </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Parking Usage by Day</h5>
             </div>
-            
-            <div class="recommendations">
-                <h3>Cost-Saving Recommendations</h3>
-                <ul>
-                    <li>
+            <div class="card-body">
+                <canvas id="usageByDayChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Parking Cost by Day</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="costByDayChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Most Used Parking Areas</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="areaUsageChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Monthly Booking Trends</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Cost-Saving Recommendations</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% if total_bookings > 10 %}
+                    <li class="list-group-item">
+                        <i class="bi bi-piggy-bank me-2 text-success"></i>
                         <strong>Consider monthly pass:</strong> Based on your usage, a monthly parking pass would save you approximately $45.00 per month.
                     </li>
-                    <li>
+                    {% endif %}
+                    
+                    <li class="list-group-item">
+                        <i class="bi bi-clock-history me-2 text-primary"></i>
                         <strong>Off-peak parking:</strong> Shifting your parking times to before 8:00 AM could save you an estimated 15% on hourly rates.
                     </li>
-                    <li>
-                        <strong>Preferred parking areas:</strong> Area B has lower rates than Area A for similar convenience to your usual destinations.
+                    
+                    <li class="list-group-item">
+                        <i class="bi bi-geo-alt me-2 text-info"></i>
+                        <strong>Preferred parking areas:</strong> Consider using parking lots with lower rates for similar convenience to your usual destinations.
                     </li>
                 </ul>
             </div>
-            
-            <div class="export-options">
-                <button id="export-summary-pdf">Export Summary as PDF</button>
-                <button id="export-summary-csv">Export Data as CSV</button>
-            </div>
-        </section>
-    </main>
+        </div>
+    </div>
+</div>
 
-    <footer>
-        <p>&copy; 2025 Vehicle Parking System. All rights reserved.</p>
-    </footer>
+<div class="row mb-4">
+    <div class="col-12 text-end">
+        <button id="export-summary-pdf" class="btn btn-outline-primary me-2">
+            <i class="bi bi-file-earmark-pdf"></i> Export as PDF
+        </button>
+        <button id="export-summary-csv" class="btn btn-outline-secondary">
+            <i class="bi bi-file-earmark-spreadsheet"></i> Export as CSV
+        </button>
+    </div>
+</div>
+{% endblock %}
 
-    <script>
-        // Sample chart initialization code
-        document.addEventListener('DOMContentLoaded', function() {
-            // Usage by day chart
-            const usageCtx = document.getElementById('usage-by-day-chart').getContext('2d');
-            const usageChart = new Chart(usageCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    datasets: [{
-                        label: 'Hours Parked',
-                        data: [4.5, 7.2, 3.0, 5.5, 8.0, 2.5, 1.0],
-                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Hours'
-                            }
-                        }
-                    }
-                }
-            });
-            
-            // Cost by day chart
-            const costCtx = document.getElementById('cost-by-day-chart').getContext('2d');
-            const costChart = new Chart(costCtx, {
-                type: 'line',
-                data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    datasets: [{
-                        label: 'Parking Cost',
-                        data: [13.50, 21.60, 9.00, 16.50, 24.00, 7.50, 3.00],
-                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-                        borderColor: 'rgba(153, 102, 255, 1)',
-                        borderWidth: 2,
-                        tension: 0.2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Cost ($)'
-                            }
-                        }
-                    }
-                }
-            });
-            
-            // Area usage chart
-            const areaCtx = document.getElementById('area-usage-chart').getContext('2d');
-            const areaChart = new Chart(areaCtx, {
-                type: 'pie',
-                data: {
-                    labels: ['Area A', 'Area B', 'Area C', 'Area D'],
-                    datasets: [{
-                        label: 'Usage Distribution',
-                        data: [45, 30, 15, 10],
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.6)',
-                            'rgba(54, 162, 235, 0.6)',
-                            'rgba(255, 206, 86, 0.6)',
-                            'rgba(75, 192, 192, 0.6)'
-                        ],
-                        borderColor: [
-                            'rgba(255, 99, 132, 1)',
-                            'rgba(54, 162, 235, 1)',
-                            'rgba(255, 206, 86, 1)',
-                            'rgba(75, 192, 192, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'right'
-                        }
-                    }
-                }
-            });
-            
-            // Time of day chart
-            const timeCtx = document.getElementById('time-of-day-chart').getContext('2d');
-            const timeChart = new Chart(timeCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['6-9 AM', '9-12 PM', '12-3 PM', '3-6 PM', '6-9 PM', '9-12 AM'],
-                    datasets: [{
-                        label: 'Parking Frequency',
-                        data: [8, 15, 12, 20, 10, 3],
-                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
-                        borderColor: 'rgba(255, 159, 64, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Number of Bookings'
-                            }
-                        }
-                    }
-                }
-            });
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle custom date range inputs when "Custom Range" is selected
+        const periodSelector = document.getElementById('summary-period');
+        const customDateRange = document.getElementById('custom-date-range');
+        
+        periodSelector.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateRange.style.display = 'flex';
+            } else {
+                customDateRange.style.display = 'none';
+                
+                // Here you could add AJAX call to reload data based on selected period
+                // For now we'll just reload the page with a query parameter
+                // window.location.href = '{{ url_for("user.summary") }}?period=' + this.value;
+            }
         });
-    </script>
-</body>
-</html>
+        
+        // Apply custom date range when button is clicked
+        document.getElementById('apply-custom').addEventListener('click', function() {
+            const startDate = document.getElementById('custom-start').value;
+            const endDate = document.getElementById('custom-end').value;
+            
+            if (startDate && endDate) {
+                // Here you would add AJAX call or page reload with the custom dates
+                // window.location.href = `{{ url_for("user.summary") }}?start=${startDate}&end=${endDate}`;
+                console.log(`Custom date range: ${startDate} to ${endDate}`);
+            } else {
+                alert('Please select both start and end dates');
+            }
+        });
+        
+        // Chart for parking usage by day
+        const usageCtx = document.getElementById('usageByDayChart').getContext('2d');
+        const usageChart = new Chart(usageCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] | tojson }},
+                datasets: [{
+                    label: 'Hours Parked',
+                    data: [
+                        {% for day in parking_data.values() %}
+                            {{ day.hours }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Hours Parked by Day'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Hours'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Chart for parking cost by day
+        const costCtx = document.getElementById('costByDayChart').getContext('2d');
+        const costChart = new Chart(costCtx, {
+            type: 'line',
+            data: {
+                labels: {{ ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] | tojson }},
+                datasets: [{
+                    label: 'Parking Cost ($)',
+                    data: [
+                        {% for day in parking_data.values() %}
+                            {{ day.cost }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 2,
+                    tension: 0.2,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Parking Cost by Day'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Cost ($)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Chart for area usage
+        const areaCtx = document.getElementById('areaUsageChart').getContext('2d');
+        const areaChart = new Chart(areaCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    {% for area, count in area_usage.items() %}
+                        "{{ area }}",
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: 'Usage by Area',
+                    data: [
+                        {% for area, count in area_usage.items() %}
+                            {{ count }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(153, 102, 255, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Parking Usage by Area'
+                    }
+                }
+            }
+        });
+        
+        // Chart for monthly trends (fetch via AJAX)
+        const fetchParkingStats = () => {
+            fetch('{{ url_for("user.parking_stats") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const labels = data.map(item => item.month);
+                    const bookingCounts = data.map(item => item.count);
+                    const costs = data.map(item => item.total_cost);
+                    
+                    const trendCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+                    const trendChart = new Chart(trendCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: 'Number of Bookings',
+                                    data: bookingCounts,
+                                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1,
+                                    yAxisID: 'y'
+                                },
+                                {
+                                    label: 'Total Cost ($)',
+                                    data: costs,
+                                    type: 'line',
+                                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                    borderColor: 'rgba(255, 99, 132, 1)',
+                                    borderWidth: 2,
+                                    yAxisID: 'y1',
+                                    fill: false
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Monthly Booking Trends'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'left',
+                                    title: {
+                                        display: true,
+                                        text: 'Number of Bookings'
+                                    },
+                                    beginAtZero: true
+                                },
+                                y1: {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'right',
+                                    title: {
+                                        display: true,
+                                        text: 'Cost ($)'
+                                    },
+                                    beginAtZero: true,
+                                    grid: {
+                                        drawOnChartArea: false,
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching parking stats:', error));
+        };
+        
+        // Load monthly stats
+        fetchParkingStats();
+        
+        // PDF Export functionality (placeholder)
+        document.getElementById('export-summary-pdf').addEventListener('click', function() {
+            alert('PDF export functionality would be implemented here using a library like jsPDF');
+        });
+        
+        // CSV Export functionality (placeholder)
+        document.getElementById('export-summary-csv').addEventListener('click', function() {
+            alert('CSV export functionality would be implemented here');
+        });
+    });
+</script>
+{% endblock %}

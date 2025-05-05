@@ -17,6 +17,7 @@ class User(db.Model, UserMixin):
     
     # Relationships
     bookings = db.relationship('Booking', backref='user', lazy=True, cascade="all, delete-orphan")
+    vehicles = db.relationship('Vehicle', backref='owner', lazy=True, cascade="all, delete-orphan")
     
     def __init__(self, username, email, password, first_name=None, last_name=None, phone=None):
         self.username = username
@@ -43,4 +44,12 @@ class User(db.Model, UserMixin):
 # User loader callback for Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    # Try to load as regular user first
+    user = User.query.get(int(user_id))
+    if user:
+        return user
+        
+    # If not found as regular user, try to load as admin
+    from models.admin import Admin
+    admin = Admin.query.get(int(user_id))
+    return admin
