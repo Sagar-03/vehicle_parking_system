@@ -1,5 +1,5 @@
 from extensions import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -7,11 +7,11 @@ class Booking(db.Model):
     parking_spot_id = db.Column(db.Integer, db.ForeignKey('parking_spot.id'), nullable=False)
     vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id'), nullable=True)  # Added foreign key to vehicle
     vehicle_reg = db.Column(db.String(20), nullable=True)  # Kept for backward compatibility
-    parking_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    parking_timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     leaving_timestamp = db.Column(db.DateTime, nullable=True)
     total_cost = db.Column(db.Float, nullable=True)
     booking_status = db.Column(db.String(20), default='active')  # active, completed, cancelled
-    created_on = db.Column(db.DateTime, default=datetime.utcnow)
+    created_on = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Keeping these for compatibility
     start_time = db.Column(db.DateTime, nullable=True)
@@ -23,7 +23,7 @@ class Booking(db.Model):
         self.vehicle_id = vehicle_id
         self.vehicle_reg = vehicle_reg
         self.booking_status = booking_status
-        self.parking_timestamp = datetime.utcnow()
+        self.parking_timestamp = datetime.now(timezone.utc)
         
         # Update the parking spot availability
         from models.parking_spot import ParkingSpot
@@ -45,7 +45,7 @@ class Booking(db.Model):
     
     def end_booking(self):
         """End this booking, calculate cost and mark the spot as available"""
-        self.leaving_timestamp = datetime.utcnow()
+        self.leaving_timestamp = datetime.now(timezone.utc)
         self.booking_status = 'completed'
         
         # Calculate duration in hours

@@ -6,16 +6,17 @@ from models.parking_lot import ParkingLot
 from models.parking_spot import ParkingSpot
 from models.booking import Booking
 from models.vehicle import Vehicle
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
-# Using wtforms directly instead of flask_wtf to avoid import errors
-from wtforms import Form, StringField, PasswordField, BooleanField, SubmitField, SelectField, HiddenField
+# Using Flask-WTF for CSRF protection and Flask integration
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, HiddenField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
 # Form classes
-class RegistrationForm(Form):
+class RegistrationForm(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -26,13 +27,13 @@ class RegistrationForm(Form):
     terms = BooleanField('I agree to the Terms', validators=[DataRequired()])
     submit = SubmitField('Register')
 
-class LoginForm(Form):
+class LoginForm(FlaskForm):
     email = StringField('Email/Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     remember = BooleanField('Remember Me')
     submit = SubmitField('Login')
 
-class VehicleForm(Form):
+class VehicleForm(FlaskForm):
     model = StringField('Vehicle Model', validators=[DataRequired(), Length(min=2, max=100)])
     license_plate = StringField('License Plate', validators=[DataRequired(), Length(min=2, max=20)])
     vehicle_type = SelectField('Vehicle Type', choices=[
@@ -44,14 +45,14 @@ class VehicleForm(Form):
     color = StringField('Color', validators=[Length(max=20)])
     submit = SubmitField('Add Vehicle')
 
-class BookingForm(Form):
+class BookingForm(FlaskForm):
     parking_lot_id = SelectField('Parking Lot', coerce=int, validators=[DataRequired()])
     vehicle_id = SelectField('Vehicle', coerce=int)
     duration = StringField('Duration (hours)', validators=[DataRequired()])
     entry_time = StringField('Entry Time', validators=[DataRequired()])
     submit = SubmitField('Find Available Spots')
 
-class ConfirmBookingForm(Form):
+class ConfirmBookingForm(FlaskForm):
     spot_id = HiddenField('Spot ID', validators=[DataRequired()])
     submit = SubmitField('Confirm Booking')
 
@@ -69,7 +70,7 @@ def user_required(f):
 # User registration
 @user_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    form = RegistrationForm(request.form)
+    form = RegistrationForm()
     if request.method == 'POST' and form.validate():
         # Check if username or email already exists
         if User.query.filter_by(username=form.username.data).first():
@@ -100,7 +101,7 @@ def register():
 # User login
 @user_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    form = LoginForm(request.form)
+    form = LoginForm()
     if request.method == 'POST' and form.validate():
         # Check if input is email or username
         user = User.query.filter((User.email == form.email.data) | 
@@ -183,25 +184,70 @@ def dashboard():
         if spot:
             lot = ParkingLot.query.get(spot.lot_id)
             if lot:
-                duration = (datetime.utcnow() - active_booking.parking_timestamp).total_seconds() / 3600
+                duration = (datetime.now(timezone.utc) - active_booking.parking_timestamp).total_seconds() / 3600
                 current_fee = round(duration * lot.price, 2)
     
+    # Get user's vehicles
+    vehicles = Vehicle.query.filter_by(user_id=current_user.id).all()
+    
+    # Get available parking lots
+    parking_lots = ParkingLot.query.all()
+    
+    # Create a booking form for the Book Parking tab
+    form = BookingForm()
+    
+    # Get all user's bookings for history tab
+    all_bookings = Booking.query.filter_by(user_id=current_user.id).order_by(Booking.parking_timestamp.desc()).all()
+    
+    # Prepare chart data (last 6 months)
+    chart_labels = []
+    chart_data = []
+    current_date = datetime.now(timezone.utc)
+    for i in range(6):
+        month_start = current_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        if i > 0:
+            if month_start.month == 1:
+                month_start = month_start.replace(year=month_start.year - 1, month=12)
+            else:
+                month_start = month_start.replace(month=month_start.month - 1)
+        
+        month_end = month_start
+        if month_start.month == 12:
+            month_end = month_start.replace(year=month_start.year + 1, month=1)
+        else:
+            month_end = month_start.replace(month=month_start.month + 1)
+        
+        monthly_bookings = Booking.query.filter(
+            Booking.user_id == current_user.id,
+            Booking.parking_timestamp >= month_start,
+            Booking.parking_timestamp < month_end
+        ).count()
+        
+        chart_labels.insert(0, month_start.strftime('%b %Y'))
+        chart_data.insert(0, monthly_bookings)
+        current_date = month_start
+    
     return render_template('user/user_dashboard.html', 
-                          active_booking=active_booking,
-                          past_bookings=past_bookings,
+                          current_booking=active_booking,
+                          bookings=all_bookings,
+                          vehicles=vehicles,
+                          parking_lots=parking_lots,
+                          form=form,
                           total_bookings=total_bookings,
                           total_spent=round(total_spent, 2),
                           average_duration=average_duration,
                           preferred_location=preferred_location,
-                          current_fee=current_fee)
+                          current_fee=current_fee,
+                          chart_labels=chart_labels,
+                          chart_data=chart_data)
 
 # Book a parking spot
 @user_bp.route('/book_parking', methods=['GET', 'POST'])
 @login_required
 @user_required
 def book_parking():
-    form = BookingForm(request.form)
-    confirmation_form = ConfirmBookingForm(request.form)
+    form = BookingForm()
+    confirmation_form = ConfirmBookingForm()
     
     # Check if user already has an active booking
     active_booking = Booking.query.filter_by(
@@ -306,7 +352,7 @@ def release_parking():
         lot = ParkingLot.query.get(spot.lot_id)
     
     # Calculate current duration and cost
-    current_duration = (datetime.utcnow() - booking.parking_timestamp).total_seconds() / 3600
+    current_duration = (datetime.now(timezone.utc) - booking.parking_timestamp).total_seconds() / 3600
     current_cost = 0
     if lot:
         current_cost = current_duration * lot.price
@@ -420,7 +466,7 @@ def parking_stats():
 @login_required
 @user_required
 def vehicles():
-    form = VehicleForm(request.form)
+    form = VehicleForm()
     
     # Get user's vehicles
     user_vehicles = Vehicle.query.filter_by(user_id=current_user.id).all()

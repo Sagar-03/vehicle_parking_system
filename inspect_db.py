@@ -24,4 +24,4 @@ def inspect_table_schema(db_path, table_name):
 
 if __name__ == "__main__":
     db_path = "instance/parking.db"
-    inspect_table_schema(db_path, "parking_spot")
+    inspect_table_schema(db_path, "booking")

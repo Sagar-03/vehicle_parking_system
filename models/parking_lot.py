@@ -1,5 +1,5 @@
 from extensions import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 class ParkingLot(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -8,7 +8,7 @@ class ParkingLot(db.Model):
     pin_code = db.Column(db.String(20), nullable=False)
     postcode_level = db.Column(db.String(50))
     available_spots = db.Column(db.Integer, default=0)
-    created_on = db.Column(db.DateTime, default=datetime.utcnow)
+    created_on = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Virtual attributes (not in the database)
     _price = 2.50  # Default price
