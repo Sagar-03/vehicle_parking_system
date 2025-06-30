@@ -6,5 +6,6 @@ from models.user import User
 from models.parking_lot import ParkingLot
 from models.parking_spot import ParkingSpot
 from models.booking import Booking
+from models.vehicle import Vehicle
 
 # You can add any shared model functionality here if needed

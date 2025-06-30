@@ -1,5 +1,5 @@
 from extensions import db
-from datetime import datetime
+from datetime import datetime, timezone, timezone
 
 class ParkingSpot(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -7,7 +7,7 @@ class ParkingSpot(db.Model):
     parking_lot_id = db.Column(db.Integer, db.ForeignKey('parking_lot.id'), nullable=False)
     is_available = db.Column(db.Boolean, default=True)
     spot_type = db.Column(db.String(50), default='standard')  # standard, disabled, electric, etc.
-    created_on = db.Column(db.DateTime, default=datetime.utcnow)
+    created_on = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Virtual attributes (not in the database)
     _spot_number = 0

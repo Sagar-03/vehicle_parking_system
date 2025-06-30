@@ -1,5 +1,5 @@
 from extensions import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Vehicle(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -8,7 +8,7 @@ class Vehicle(db.Model):
     license_plate = db.Column(db.String(20), nullable=False, unique=True)
     vehicle_type = db.Column(db.String(20), default='standard')  # standard, compact, SUV, electric, etc.
     color = db.Column(db.String(20))
-    created_on = db.Column(db.DateTime, default=datetime.utcnow)
+    created_on = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Relationships
     bookings = db.relationship('Booking', backref='vehicle', lazy=True)

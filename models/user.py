@@ -1,6 +1,6 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Import db from extensions instead of from app
 from extensions import db, login_manager
@@ -13,7 +13,7 @@ class User(db.Model, UserMixin):
     first_name = db.Column(db.String(50))
     last_name = db.Column(db.String(50))
     phone = db.Column(db.String(20))
-    registered_on = db.Column(db.DateTime, default=datetime.utcnow)
+    registered_on = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Relationships
     bookings = db.relationship('Booking', backref='user', lazy=True, cascade="all, delete-orphan")

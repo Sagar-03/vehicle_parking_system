@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_login import current_user
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # Import extensions from the extensions file
 from extensions import db, login_manager
@@ -178,7 +178,7 @@ def create_app():
     @app.context_processor
     def inject_now():
         """Add current time to all templates"""
-        return {'now': datetime.utcnow()}
+        return {'now': datetime.now(timezone.utc)}
     
     return app
 

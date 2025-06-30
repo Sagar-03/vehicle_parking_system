@@ -6,21 +6,23 @@ from models.user import User
 from models.parking_lot import ParkingLot
 from models.parking_spot import ParkingSpot
 from models.booking import Booking
-from datetime import datetime, timedelta
+from models.vehicle import Vehicle
+from datetime import datetime, timedelta, timezone
 from functools import wraps
-# Using wtforms directly instead of flask_wtf to avoid the import error
-from wtforms import Form, StringField, PasswordField, DecimalField, IntegerField, BooleanField, SubmitField, SelectField, TextAreaField
+# Using Flask-WTF for CSRF protection and Flask integration
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, DecimalField, IntegerField, BooleanField, SubmitField, SelectField, TextAreaField
 from wtforms.validators import DataRequired, NumberRange, Optional
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 # Form classes
-class LoginForm(Form):
+class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
-class ParkingLotForm(Form):
+class ParkingLotForm(FlaskForm):
     name = StringField('Parking Lot Name', validators=[DataRequired()])
     location = StringField('Location', validators=[DataRequired()])
     address = StringField('Address', validators=[DataRequired()])
@@ -542,7 +544,7 @@ def api_parking_stats():
         return jsonify({'error': 'Invalid days parameter. Must be a positive integer'}), 400
     
     # Calculate the start date based on the requested period
-    end_date = datetime.utcnow()
+    end_date = datetime.now(timezone.utc)
     start_date = end_date - timedelta(days=days)
     
     # Base query
