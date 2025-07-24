@@ -1,10 +1,13 @@
 from flask import Flask, render_template, redirect, url_for, flash, request
-from flask_login import current_user
+from flask_login import current_user, logout_user
+from flask_wtf.csrf import CSRFProtect
 import os
 from datetime import datetime, timedelta, timezone
 
 # Import extensions from the extensions file
 from extensions import db, login_manager
+# Import Admin model to avoid NameError in logout route
+from models.admin import Admin
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
@@ -26,12 +29,27 @@ def create_app():
     if not app.config.get('SECRET_KEY'):
         app.config['SECRET_KEY'] = 'dev-key-for-vehicle-parking-system'
     
+    # Initialize CSRF protection
+    csrf = CSRFProtect(app)
+    
+    # Configure session settings to prevent persistence beyond browser close
+    app.config['SESSION_PERMANENT'] = False  # Sessions expire when browser is closed
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  # Sessions expire after 30 minutes of inactivity
+    
     # Initialize plugins
     db.init_app(app)
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'  # Set login view for redirect
+    login_manager.login_view = 'user.login'  # Set login view for redirect to user login by default
     login_manager.login_message = "Please log in to access this page."
     login_manager.login_message_category = "info"
+    login_manager.session_protection = "strong"  # Helps prevent session cookie hijacking
+    login_manager.remember_cookie_duration = timedelta(days=1)  # Remember me cookies last for 1 day
+    
+    # Configure separate login views for admin and user
+    login_manager.blueprint_login_views = {
+        'admin': 'admin.login',
+        'user': 'user.login'
+    }
     
     # Register blueprints
     from routes.admin_routes import admin_bp
@@ -46,6 +64,9 @@ def create_app():
     
     @auth_bp.route('/login', methods=['GET', 'POST'])
     def login():
+        # Logout any current session before redirecting
+        logout_user()
+        
         # Redirect to appropriate login page based on user type
         if request.args.get('type') == 'admin':
             return redirect(url_for('admin.login'))
@@ -58,10 +79,15 @@ def create_app():
     
     @auth_bp.route('/logout')
     def logout():
-        if isinstance(current_user, Admin):
-            return redirect(url_for('admin.logout'))
+        # Check if user is authenticated before trying to log out
+        if current_user.is_authenticated:
+            if isinstance(current_user, Admin):
+                return redirect(url_for('admin.logout'))
+            else:
+                return redirect(url_for('user.logout'))
         else:
-            return redirect(url_for('user.logout'))
+            # If not authenticated, just redirect to the index page
+            return redirect(url_for('index'))
     
     app.register_blueprint(auth_bp)
     
@@ -133,11 +159,8 @@ def create_app():
     # Route redirecting to appropriate dashboard based on user type
     @app.route('/')
     def index():
-        if current_user.is_authenticated:
-            if isinstance(current_user, Admin):
-                return redirect(url_for('admin.dashboard'))
-            else:
-                return redirect(url_for('user.dashboard'))
+        # Display landing page regardless of authentication status
+        # This prevents auto-redirect to dashboard when session cookies exist
         return render_template('index.html')
     
     # Add routes for the main sections accessible without login

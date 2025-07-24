@@ -170,7 +170,7 @@
                                             <td>{{ lot.total_spots }}</td>
                                             <td>{{ lot.available_spots }}</td>
                                             <td>
-                                                <a href="{{ url_for('admin.view_parking_lot', lot_id=lot.id) }}" class="btn btn-sm btn-info">View</a>
+                                                <a href="{{ url_for('admin.view_parking_spots', lot_id=lot.id) }}" class="btn btn-sm btn-info">View</a>
                                                 <button class="btn btn-sm btn-danger btn-delete-lot" data-lot-id="{{ lot.id }}">Delete</button>
                                             </td>
                                         </tr>
