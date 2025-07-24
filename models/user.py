@@ -40,16 +40,3 @@ class User(db.Model, UserMixin):
     
     def __repr__(self):
         return f'<User {self.username}>'
-
-# User loader callback for Flask-Login
-@login_manager.user_loader
-def load_user(user_id):
-    # Try to load as regular user first
-    user = User.query.get(int(user_id))
-    if user:
-        return user
-        
-    # If not found as regular user, try to load as admin
-    from models.admin import Admin
-    admin = Admin.query.get(int(user_id))
-    return admin

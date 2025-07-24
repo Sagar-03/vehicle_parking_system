@@ -71,7 +71,7 @@ def user_required(f):
 @user_bp.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
-    if request.method == 'POST' and form.validate():
+    if form.validate_on_submit():
         # Check if username or email already exists
         if User.query.filter_by(username=form.username.data).first():
             flash('Username already exists!', 'danger')
@@ -94,15 +94,18 @@ def register():
         db.session.commit()
         
         flash('Registration successful! You can now log in.', 'success')
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('user.login'))
     
     return render_template('shared/register.html', form=form)
 
 # User login
 @user_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    # Clear any existing sessions first to ensure fresh login
+    logout_user()
+    
     form = LoginForm()
-    if request.method == 'POST' and form.validate():
+    if form.validate_on_submit():
         # Check if input is email or username
         user = User.query.filter((User.email == form.email.data) | 
                                (User.username == form.email.data)).first()
