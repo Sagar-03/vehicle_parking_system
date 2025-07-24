@@ -1,4 +1,3 @@
-# This is a requirements file for a Flask web application with SQLAlchemy and other dependencies.
 Flask==2.3.2
 Flask-SQLAlchemy==3.0.3
 Flask-WTF==1.2.1
@@ -8,3 +7,4 @@ Werkzeug==2.3.6
 email-validator==2.0.0
 python-dotenv==1.0.1
 alembic==1.13.1
+gunicorn==21.2.0  # Add this line
