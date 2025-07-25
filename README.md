@@ -18,8 +18,8 @@ A multi-user Flask web application that allows **admins** to manage vehicle park
 | **Templating**| Jinja2             | Enables dynamic HTML rendering with logic on the front-end.                |
 | **Database** | SQLite (via SQLAlchemy or raw SQL) | Lightweight RDBMS; DB is created programmatically.               |
 | **Frontend** | HTML, CSS, Bootstrap | For page layout, styling, responsiveness, and forms.                      |
-| **Charts**   | Chart.js *(optional)* | For creating dashboards and visual summaries of lots/usage.               |
-| **Auth**     | Flask-Login *(optional)* | To manage login sessions for users/admin securely.                  |
+
+
 
 ---
 
