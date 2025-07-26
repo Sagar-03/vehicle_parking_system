@@ -1,80 +1,138 @@
-# 🚗 Vehicle Parking App - V1
+# 🚗 Vehicle Parking System
 
-A multi-user Flask web application that allows **admins** to manage vehicle parking lots and **users** to reserve, park, and vacate 4-wheeler parking spots. This app supports role-based access (admin/user), provides parking analytics, and stores all data using SQLite with proper backend validations.
-
----
+A comprehensive multi-user Flask web application for managing vehicle parking facilities. This system allows **admins** to manage parking lots and **users** to reserve, park, and vacate 4-wheeler parking spots with real-time tracking and analytics.
 
 ## 📚 Project Description
 
-**Vehicle Parking App V1** is built as part of the *Modern Application Development I* curriculum. It simulates a real-world 4-wheeler parking management system with multiple lots and limited spots, managed by an admin and used by multiple authenticated users.
+**Vehicle Parking System** is a robust parking management solution built with Flask that simulates a real-world 4-wheeler parking scenario with multiple lots and limited spots. The system features:
 
----
+- Role-based access control (Admin/User)
+- Real-time parking spot management
+- Vehicle registration and tracking
+- Detailed booking history and analytics
+- Secure authentication and session management
 
-## 🛠️ Tech Stack & Frameworks Used
+## 🛠️ Tech Stack & Frameworks
 
-| Layer        | Technology         | Description                                                                 |
-|--------------|--------------------|-----------------------------------------------------------------------------|
-| **Backend**  | Flask              | Micro web framework to manage routing, forms, sessions, and server logic.  |
-| **Templating**| Jinja2             | Enables dynamic HTML rendering with logic on the front-end.                |
-| **Database** | SQLite (via SQLAlchemy or raw SQL) | Lightweight RDBMS; DB is created programmatically.               |
-| **Frontend** | HTML, CSS, Bootstrap | For page layout, styling, responsiveness, and forms.                      |
+| Layer | Technology | Description |
+|-------|------------|-------------|
+| **Backend** | Flask | Python-based micro web framework handling routing, authentication, and server logic |
+| **Database** | SQLite & SQLAlchemy ORM | Lightweight database with object-relational mapping for data persistence |
+| **Frontend** | Bootstrap, HTML, CSS, JavaScript | Responsive UI with dynamic components for optimal user experience |
+| **Security** | Flask-Login, CSRF Protection | Secure authentication and protection against cross-site request forgery |
+| **Forms** | Flask-WTF | Form validation and processing with CSRF protection |
+| **API** | RESTful endpoints | JSON-based API for data access and manipulation |
 
+## ✅ Key Features
 
+### 👤 Admin Portal
+- **Dashboard**: Real-time analytics showing occupancy rates, revenue, and recent bookings
+- **Parking Management**: Create, edit, and delete parking lots with customizable spot types (standard, disabled, electric)
+- **Spot Management**: Automatically generate parking spots with customizable layouts (rows and columns)
+- **User Management**: View and manage all system users
+- **Analytics**: Visualize parking data with interactive charts and statistics
+- **Manual Operations**: Ability to manually mark spots as occupied/available
 
----
+### 👥 User Portal
+- **Dashboard**: View active bookings, parking fee, and booking history
+- **Vehicle Management**: Register multiple vehicles with details (model, license plate, type)
+- **Booking System**: Select a parking lot and get automatically assigned to an available spot
+- **Check-out System**: Release parking spots and view total parking duration and cost
+- **Parking History**: Complete history of all parking transactions with timestamps and costs
 
-## ✅ Core Functionalities
+## 🚀 Installation and Setup
 
-### 👤 Admin
-- Pre-existing root admin (no registration).
-- Create, edit, and delete parking lots.
-- Automatically generate `N` parking spots in a lot.
-- View all users, current parking status, and bookings.
-- Dashboard analytics (e.g., occupancy per lot).
+### Prerequisites
+- Python 3.8 or higher
+- pip (Python package manager)
+- Git (optional, for cloning the repository)
 
-### 👥 User
-- Register and login.
-- Select a lot and auto-assign first available parking spot.
-- Park a vehicle (mark as occupied) and vacate spot.
-- See parking history and stats with timestamps.
-- Cannot choose spot manually — assigned automatically.
-
----
----
-
-## 🚀 How to Run the Project Locally
-
-### ✅ Prerequisites
-
-- Python 3.x installed
-- `pip` (Python package manager)
-
----
-
-### 📥 Step-by-Step Installation
+### Step-by-Step Installation
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/vehicle-parking-app.git
-cd vehicle-parking-app
+git clone https://github.com/Sagar-03/vehicle_parking_system.git
+cd vehicle_parking_system
 
-# 2. Create a virtual environment
+# 2. Create and activate a virtual environment
 python -m venv venv
 
-# Activate it:
 # For Windows:
 venv\Scripts\activate
-
 # For macOS/Linux:
 source venv/bin/activate
 
-# 3. Install all required dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Run the application
-python run.py
+# 4. Initialize the database
+python recreate_db.py
+
+# 5. Run the application
+python app.py
 
 # App will be available at:
 http://127.0.0.1:5000/
+```
 
+### Default Login Credentials
+- **Admin**: 
+  - Username: admin
+  - Password: admin123
 
+## 📊 System Architecture
+
+The application follows the MVC (Model-View-Controller) architecture:
+- **Models**: SQLAlchemy models for User, Admin, ParkingLot, ParkingSpot, Vehicle, and Booking
+- **Views**: Jinja2 templates with Bootstrap for responsive UI
+- **Controllers**: Flask route blueprints (admin_routes.py, user_routes.py)
+
+## 🔒 Security Features
+
+- Password hashing for secure credential storage
+- CSRF protection for all forms
+- Session management with automatic timeout
+- Role-based access control with custom decorators
+
+## 📱 API Endpoints
+
+The system includes several RESTful API endpoints:
+- `/api/parking_data` - Get detailed booking information
+- `/api/parking_stats` - Get parking statistics for specific periods
+- `/api/parking_lots` - Get information about all parking lots
+
+## 📝 Project Structure
+
+```
+vehicle_parking_system/
+├── app.py                 # Application factory
+├── config.py              # Configuration settings
+├── extensions.py          # Flask extensions
+├── models/                # Database models
+├── routes/                # Application routes
+│   ├── admin_routes.py    # Admin-specific routes
+│   └── user_routes.py     # User-specific routes
+├── static/                # CSS, JavaScript, and images
+├── templates/             # Jinja2 HTML templates
+└── instance/              # Instance-specific data (database)
+```
+
+## 🧪 Testing
+
+Run tests using pytest:
+
+```bash
+pytest
+```
+
+## 📈 Future Enhancements
+
+- Mobile application integration
+- Payment gateway integration
+- QR code-based check-in/check-out
+- Automated license plate recognition
+- Reservation system for advance booking
+
+---
+
+Developed as part of the Modern Application Development course project.
