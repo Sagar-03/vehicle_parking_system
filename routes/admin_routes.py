@@ -356,6 +356,7 @@ def statistics():
 @admin_required
 def view_user():
     users = User.query.all()
+    # Flask-WTF automatically adds csrf_token to template context when using render_template
     return render_template('admin/view_user.html', users=users)
 
 # Delete user
@@ -471,6 +472,47 @@ def mark_spot_occupied():
     db.session.commit()
     
     flash(f'Spot {spot.spot_number} has been marked as occupied with vehicle {vehicle_reg}.', 'success')
+    return redirect(url_for('admin.view_parking_spots'))
+
+# Release a parking spot (admin action)
+@admin_bp.route('/release_spot', methods=['POST'])
+@login_required
+@admin_required
+def release_spot():
+    spot_id = request.form.get('spot_id')
+    
+    if not spot_id:
+        flash('Spot ID is required.', 'danger')
+        return redirect(url_for('admin.view_parking_spots'))
+    
+    # Get the spot
+    spot = ParkingSpot.query.get_or_404(spot_id)
+    
+    # Check if spot is available (can't release an already available spot)
+    if spot.is_available:
+        flash('This spot is already available.', 'danger')
+        return redirect(url_for('admin.view_parking_spots'))
+    
+    # Find any active booking for this spot
+    booking = Booking.query.filter_by(
+        parking_spot_id=spot.id, 
+        booking_status='active'
+    ).first()
+    
+    if booking:
+        # End the booking
+        booking.leaving_timestamp = datetime.now(timezone.utc)
+        booking.booking_status = 'completed'
+        booking.calculate_total_cost()
+        db.session.add(booking)
+    
+    # Update spot status
+    spot.is_available = True
+    db.session.add(spot)
+    
+    db.session.commit()
+    
+    flash(f'Spot {spot.spot_number} has been released and is now available.', 'success')
     return redirect(url_for('admin.view_parking_spots'))
 
 # API endpoints for accessing parking data programmatically
