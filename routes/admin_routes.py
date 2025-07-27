@@ -356,6 +356,7 @@ def statistics():
 @admin_required
 def view_user():
     users = User.query.all()
+    # Flask-WTF automatically adds csrf_token to template context when using render_template
     return render_template('admin/view_user.html', users=users)
 
 # Delete user

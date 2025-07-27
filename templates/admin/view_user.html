@@ -57,14 +57,15 @@
                                 <td>{{ user.registered_on.strftime('%Y-%m-%d') }}</td>
                                 <td>{{ user.vehicles|length }}</td>
                                 <td>
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-sm btn-info view-user-btn" 
+                                    <div class="d-flex">
+                                        <button type="button" class="btn btn-sm btn-info view-user-btn me-2" 
                                                 data-bs-toggle="modal" data-bs-target="#viewUserModal" 
                                                 data-user-id="{{ user.id }}">
                                             View Details
                                         </button>
                                         <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" 
                                               onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                         </form>
                                     </div>
