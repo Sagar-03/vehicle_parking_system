@@ -54,31 +54,25 @@ A comprehensive multi-user Flask web application for managing vehicle parking fa
 git clone https://github.com/Sagar-03/vehicle_parking_system.git
 cd vehicle_parking_system
 
-# 2. Create and activate a virtual environment
-python -m venv venv
-
 # For Windows:
 venv\Scripts\activate
 # For macOS/Linux:
 source venv/bin/activate
 
-# 3. Install dependencies
+# 2. Install dependencies
 pip install -r requirements.txt
 
-# 4. Initialize the database
+# 3. Initialize the database
 python recreate_db.py
 
-# 5. Run the application
+# 4. Run the application
 python app.py
 
 # App will be available at:
 http://127.0.0.1:5000/
 ```
 
-### Default Login Credentials
-- **Admin**: 
-  - Username: admin
-  - Password: admin123
+
 
 ## 📊 System Architecture
 
