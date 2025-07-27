@@ -1,110 +1,105 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Release Parking - Vehicle Parking System</title>
-    <link rel="stylesheet" href="styles/main.css">
-    <script src="scripts/release_parking.js" defer></script>
-</head>
-<body>
-    <header>
-        <h1>Vehicle Parking System</h1>
+{% extends 'shared/base.html' %}
+
+{% block title %}Release Parking{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>Release Parking</h2>
         <nav>
-            <ul>
-                <li><a href="user_dashboard.html">Dashboard</a></li>
-                <li><a href="book_parking.html">Book Parking</a></li>
-                <li><a href="history.html">History</a></li>
-                <li><a href="summary.html">Summary</a></li>
-                <li><a href="index.html">Logout</a></li>
-            </ul>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <a class="nav-link" href="{{ url_for('user.dashboard') }}">Dashboard</a>
+                <a class="nav-link" href="{{ url_for('user.book_parking') }}">Book Parking</a>
+                <a class="nav-link active" href="{{ url_for('user.release_parking') }}">Release Parking</a>
+                <a class="nav-link" href="{{ url_for('user.history') }}">History</a>
+                <a class="nav-link" href="{{ url_for('user.vehicles') }}">Vehicles</a>
+            </div>
         </nav>
-    </header>
+    </div>
+</div>
 
-    <main>
-        <section class="release-container">
-            <h2>Release Parking</h2>
-            
-            <div class="active-bookings">
-                <h3>Your Active Bookings</h3>
-                
-                <div class="booking-cards">
-                    <!-- Booking cards will be populated via JavaScript -->
-                    <div class="booking-card">
-                        <div class="booking-header">
-                            <h4>Booking #PK12347</h4>
-                            <span class="status active">Active</span>
-                        </div>
-                        <div class="booking-details">
-                            <p><strong>Vehicle:</strong> ABC123</p>
-                            <p><strong>Slot:</strong> A-08</p>
-                            <p><strong>Check-in:</strong> 2025-05-01 10:00</p>
-                            <p><strong>Duration:</strong> 3h 45m (and counting)</p>
-                            <p><strong>Current Amount:</strong> $11.25</p>
-                        </div>
-                        <div class="booking-actions">
-                            <button class="release-btn" data-booking-id="PK12347">Release Parking</button>
-                        </div>
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Active Booking Details</h5>
+            </div>
+            <div class="card-body">
+                {% if booking %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Booking Information</h5>
+                        <table class="table">
+                            <tr>
+                                <th>Booking ID:</th>
+                                <td>#{{ booking.id }}</td>
+                            </tr>
+                            <tr>
+                                <th>Parking Spot:</th>
+                                <td>{{ spot.spot_number }}</td>
+                            </tr>
+                            <tr>
+                                <th>Parking Lot:</th>
+                                <td>{{ lot.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Check-in Time:</th>
+                                <td>{{ booking.parking_timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                        </table>
                     </div>
-                    
-                    <div class="booking-card">
-                        <div class="booking-header">
-                            <h4>Booking #PK12348</h4>
-                            <span class="status reserved">Reserved</span>
-                        </div>
-                        <div class="booking-details">
-                            <p><strong>Vehicle:</strong> XYZ789</p>
-                            <p><strong>Slot:</strong> C-15</p>
-                            <p><strong>Reserved for:</strong> 2025-05-05 15:00</p>
-                            <p><strong>Duration:</strong> 2h (planned)</p>
-                            <p><strong>Amount:</strong> $6.00 (estimated)</p>
-                        </div>
-                        <div class="booking-actions">
-                            <button class="cancel-btn" data-booking-id="PK12348">Cancel Reservation</button>
-                        </div>
+                    <div class="col-md-6">
+                        <h5>Cost Details</h5>
+                        <table class="table">
+                            <tr>
+                                <th>Duration:</th>
+                                <td>{{ '%0.2f'|format(current_duration) }} hours</td>
+                            </tr>
+                            <tr>
+                                <th>Rate:</th>
+                                <td>${{ lot.price }}/hour</td>
+                            </tr>
+                            <tr>
+                                <th>Current Cost:</th>
+                                <td>${{ '%0.2f'|format(current_cost) }}</td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
-            </div>
-            
-            <div id="release-confirmation" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h3>Confirm Parking Release</h3>
-                    <div id="release-details">
-                        <p><strong>Booking ID:</strong> <span id="modal-booking-id"></span></p>
-                        <p><strong>Vehicle:</strong> <span id="modal-vehicle"></span></p>
-                        <p><strong>Slot:</strong> <span id="modal-slot"></span></p>
-                        <p><strong>Check-in Time:</strong> <span id="modal-checkin"></span></p>
-                        <p><strong>Current Duration:</strong> <span id="modal-duration"></span></p>
-                        <p><strong>Final Amount:</strong> <span id="modal-amount"></span></p>
-                    </div>
-                    <div class="modal-actions">
-                        <button id="confirm-release">Confirm Release</button>
-                        <button id="cancel-release">Cancel</button>
+                <div class="row mt-4">
+                    <div class="col-12 text-center">
+                        <form method="POST" action="{{ url_for('user.release_parking') }}" onsubmit="return confirm('Are you sure you want to release this parking spot?');">
+                            {{ csrf_token() }}
+                            <button type="submit" class="btn btn-danger btn-lg">Release Parking Spot</button>
+                        </form>
                     </div>
                 </div>
-            </div>
-            
-            <div id="payment-success" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h3>Payment Successful</h3>
-                    <div class="success-message">
-                        <p>Your parking has been successfully released. A receipt has been sent to your email.</p>
-                        <p><strong>Transaction ID:</strong> <span id="transaction-id"></span></p>
-                        <p><strong>Amount Paid:</strong> <span id="paid-amount"></span></p>
-                    </div>
-                    <div class="modal-actions">
-                        <button id="view-receipt">View Receipt</button>
-                        <button id="return-dashboard">Return to Dashboard</button>
-                    </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <p>You don't have any active parking to release.</p>
+                    <a href="{{ url_for('user.book_parking') }}" class="btn btn-primary mt-2">Book Parking</a>
                 </div>
+                {% endif %}
             </div>
-        </section>
-    </main>
+        </div>
+    </div>
 
-    <footer>
-        <p>&copy; 2025 Vehicle Parking System. All rights reserved.</p>
-    </footer>
-</body>
-</html>
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Payment Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5>Payment Method</h5>
+                    <p>Payment will be processed automatically when you release your parking spot.</p>
+                    <p>You will be charged based on the actual duration of your stay.</p>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

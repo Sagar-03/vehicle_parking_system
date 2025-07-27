@@ -109,9 +109,10 @@
                                             Mark Occupied
                                         </button>
                                         {% else %}
-                                        <a href="#" class="btn btn-sm btn-success" onclick="return confirm('Are you sure you want to release this spot?');">
+                                        <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#releaseSpotModal"
+                                                data-spot-id="{{ spot.id }}" data-spot-number="{{ spot.spot_number }}">
                                             Release Spot
-                                        </a>
+                                        </button>
                                         {% endif %}
                                     </div>
                                 </td>
@@ -251,6 +252,31 @@
         </div>
     </div>
 </div>
+
+<!-- Release Spot Modal -->
+<div class="modal fade" id="releaseSpotModal" tabindex="-1" aria-labelledby="releaseSpotModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="releaseSpotModalLabel">Release Parking Spot</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.release_spot') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <p>You are about to manually release parking spot <strong id="release-spot-number"></strong>.</p>
+                    <p>This will make the spot available for new bookings.</p>
+                    
+                    <input type="hidden" name="spot_id" id="release-spot-id">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Release Spot</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -328,6 +354,17 @@
             
             document.getElementById('occupy-spot-id').value = spotId;
             document.getElementById('occupy-spot-number').textContent = spotNumber;
+        });
+    });
+    
+    // Handle release spot modal
+    document.querySelectorAll('[data-bs-target="#releaseSpotModal"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const spotId = this.getAttribute('data-spot-id');
+            const spotNumber = this.getAttribute('data-spot-number');
+            
+            document.getElementById('release-spot-id').value = spotId;
+            document.getElementById('release-spot-number').textContent = spotNumber;
         });
     });
 </script>
