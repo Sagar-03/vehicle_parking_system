@@ -232,6 +232,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('admin.mark_spot_occupied') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body">
                     <p>You are about to manually mark spot <strong id="occupy-spot-number"></strong> as occupied.</p>
                     
