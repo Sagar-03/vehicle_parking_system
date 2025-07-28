@@ -127,24 +127,20 @@
                         <h5 class="card-title mb-0">Book a Parking Spot</h5>
                     </div>
                     <div class="card-body">
+                        {% if current_booking %}
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            You already have an active booking. Please release your current spot before booking a new one.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endif %}
                         <form method="POST" action="{{ url_for('user.book_parking') }}">
                             {{ form.hidden_tag() }}
-                            <div class="mb-3">
-                                <label for="parking_lot_id" class="form-label">Select Parking Lot:</label>
-                                <select class="form-select" id="parking_lot_id" name="parking_lot_id" required>
-                                    <option value="">-- Select Parking Lot --</option>
-                                    {% for lot in parking_lots %}
-                                        <option value="{{ lot.id }}">{{ lot.name }} ({{ lot.available_spots }} spots available)</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
                             <div class="mb-3">
                                 <label for="vehicle_id" class="form-label">Select Vehicle:</label>
                                 <select class="form-select" id="vehicle_id" name="vehicle_id" required>
                                     <option value="">-- Select Vehicle --</option>
-                                    {% for vehicle in vehicles %}
-                                        <option value="{{ vehicle.id }}">{{ vehicle.model }} - {{ vehicle.license_plate }}</option>
+                                    {% for vehicle in user_vehicles %}
+                                        <option value="{{ vehicle.id }}" {% if selected_vehicle_id and vehicle.id == selected_vehicle_id|int %}selected{% endif %}>{{ vehicle.model }} - {{ vehicle.license_plate }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -153,6 +149,16 @@
                                 <label for="duration" class="form-label">Duration (hours):</label>
                                 <input type="number" class="form-control" id="duration" name="duration" min="1" max="24" required>
                             </div>
+                            {% with messages = get_flashed_messages(with_categories=true) %}
+                              {% if messages %}
+                                {% for category, message in messages %}
+                                  <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                  </div>
+                                {% endfor %}
+                              {% endif %}
+                            {% endwith %}
 
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary">Book Parking Spot</button>
@@ -290,10 +296,10 @@
             new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: {{ chart_labels | tojson }},
+                    labels: {{ chart_labels|tojson|safe }},
                     datasets: [{
                         label: 'Parking Sessions',
-                        data: {{ chart_data | tojson }},
+                        data: {{ chart_data|tojson|safe }},
                         borderColor: 'rgb(75, 192, 192)',
                         backgroundColor: 'rgba(75, 192, 192, 0.2)',
                         tension: 0.1

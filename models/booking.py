@@ -29,8 +29,19 @@ class Booking(db.Model):
         from models.parking_spot import ParkingSpot
         spot = ParkingSpot.query.get(parking_spot_id)
         if spot:
+            # Verify spot is still available before booking
+            if not spot.is_available:
+                raise ValueError("This parking spot is no longer available")
+                
             spot.is_available = False
             db.session.add(spot)
+            
+            # Also update the parent lot's available spots
+            from models.parking_lot import ParkingLot
+            lot = ParkingLot.query.get(spot.parking_lot_id)
+            if lot:
+                lot.available_spots = max(0, lot.available_spots - 1)
+                db.session.add(lot)
     
     def cancel_booking(self):
         """Cancel this booking and update the parking spot availability"""
@@ -68,6 +79,11 @@ class Booking(db.Model):
             # Mark spot as available
             spot.is_available = True
             db.session.add(spot)
+            
+            # Update the lot's available spots
+            if lot:
+                lot.available_spots = lot.available_spots + 1
+                db.session.add(lot)
     
     def __repr__(self):
         return f'<Booking {self.id} for User {self.user_id}>'
