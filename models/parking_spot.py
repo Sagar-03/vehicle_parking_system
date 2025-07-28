@@ -1,9 +1,11 @@
 from extensions import db
 from datetime import datetime, timezone, timezone
 
+
 class ParkingSpot(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     spot_id = db.Column(db.String(50), nullable=False, unique=True)
+    spot_number = db.Column(db.Integer, nullable=False)  # New: store the spot number as integer
     parking_lot_id = db.Column(db.Integer, db.ForeignKey('parking_lot.id'), nullable=False)
     is_available = db.Column(db.Boolean, default=True)
     spot_type = db.Column(db.String(50), default='standard')  # standard, disabled, electric, etc.
@@ -14,6 +16,7 @@ class ParkingSpot(db.Model):
 
     def __init__(self, lot_id, spot_number, spot_type='standard', is_available=True):
         self.parking_lot_id = lot_id
+        self.spot_number = spot_number
         self.spot_type = spot_type
         self.is_available = is_available
         self.spot_id = f"L{lot_id}-S{spot_number}"
