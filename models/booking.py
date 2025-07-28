@@ -89,5 +89,31 @@ class Booking(db.Model):
                 lot.available_spots = lot.available_spots + 1
                 db.session.add(lot)
     
+    def calculate_total_cost(self):
+        """Calculate and set the total cost for this booking based on duration and lot price."""
+        if not self.parking_timestamp or not self.leaving_timestamp:
+            self.total_cost = 0.0
+            return
+        parking_time = self.parking_timestamp
+        leaving_time = self.leaving_timestamp
+        # Ensure both are timezone-aware
+        from datetime import timezone
+        if parking_time.tzinfo is None or parking_time.tzinfo.utcoffset(parking_time) is None:
+            parking_time = parking_time.replace(tzinfo=timezone.utc)
+        if leaving_time.tzinfo is None or leaving_time.tzinfo.utcoffset(leaving_time) is None:
+            leaving_time = leaving_time.replace(tzinfo=timezone.utc)
+        duration_hours = (leaving_time - parking_time).total_seconds() / 3600
+        from models.parking_spot import ParkingSpot
+        from models.parking_lot import ParkingLot
+        spot = ParkingSpot.query.get(self.parking_spot_id)
+        if spot:
+            lot = ParkingLot.query.get(spot.parking_lot_id)
+            if lot and hasattr(lot, 'price'):
+                self.total_cost = round(duration_hours * lot.price, 2)
+            else:
+                self.total_cost = round(duration_hours * 2.50, 2)
+        else:
+            self.total_cost = round(duration_hours * 2.50, 2)
+
     def __repr__(self):
         return f'<Booking {self.id} for User {self.user_id}>'
