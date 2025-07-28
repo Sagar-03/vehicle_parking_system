@@ -451,9 +451,14 @@ def release_parking():
     
     # Calculate current duration and cost
     parking_time = booking.parking_timestamp
-    if parking_time.tzinfo is None:
+    # Ensure parking_time is timezone-aware (UTC)
+
+    if parking_time.tzinfo is None or parking_time.tzinfo.utcoffset(parking_time) is None:
         parking_time = parking_time.replace(tzinfo=timezone.utc)
-    current_duration = (datetime.now(timezone.utc) - parking_time).total_seconds() / 3600
+    now_utc = datetime.now(timezone.utc)
+
+    # If now_utc is offset-aware and parking_time is offset-naive, make both UTC
+    current_duration = (now_utc - parking_time).total_seconds() / 3600
     current_cost = 0
     if lot:
         current_cost = current_duration * lot.price
