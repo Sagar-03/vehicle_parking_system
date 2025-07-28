@@ -47,7 +47,7 @@ class VehicleForm(FlaskForm):
 
 class BookingForm(FlaskForm):
     parking_lot_id = SelectField('Parking Lot', coerce=int, validators=[DataRequired()])
-    vehicle_id = SelectField('Vehicle', coerce=int)
+    vehicle_id = SelectField('Vehicle', coerce=int, validators=[DataRequired()])
     duration = StringField('Duration (hours)', validators=[DataRequired()])
     entry_time = StringField('Entry Time', validators=[DataRequired()])
     submit = SubmitField('Find Available Spots')
@@ -136,7 +136,7 @@ def dashboard():
     # Get current active booking if any
     active_booking = Booking.query.filter_by(
         user_id=current_user.id, 
-        leaving_timestamp=None
+        booking_status='active'
     ).first()
     
     # Get past bookings for this user
@@ -187,7 +187,12 @@ def dashboard():
         if spot:
             lot = ParkingLot.query.get(spot.lot_id)
             if lot:
-                duration = (datetime.now(timezone.utc) - active_booking.parking_timestamp).total_seconds() / 3600
+                now = datetime.now(timezone.utc)
+                parking_time = active_booking.parking_timestamp
+                # Make both datetimes timezone-aware or naive
+                if parking_time.tzinfo is None:
+                    parking_time = parking_time.replace(tzinfo=timezone.utc)
+                duration = (now - parking_time).total_seconds() / 3600
                 current_fee = round(duration * lot.price, 2)
     
     # Get user's vehicles
@@ -252,78 +257,164 @@ def book_parking():
     form = BookingForm()
     confirmation_form = ConfirmBookingForm()
     
-    # Check if user already has an active booking
-    active_booking = Booking.query.filter_by(
-        user_id=current_user.id, 
-        booking_status='active'
-    ).first()
-    
-    if active_booking:
-        flash('You already have an active booking. Please release your current spot before booking a new one.', 'warning')
-        return redirect(url_for('user.dashboard'))
-    
     # Get all parking lots for the dropdown
     parking_lots = ParkingLot.query.all()
     form.parking_lot_id.choices = [(lot.id, f"{lot.name} ({lot.available_spots} spots available)") for lot in parking_lots]
-    
+
     # Get user's vehicles for the dropdown
     user_vehicles = Vehicle.query.filter_by(user_id=current_user.id).all()
-    
     if not user_vehicles:
         flash('You need to add a vehicle before booking a parking spot.', 'warning')
         return redirect(url_for('user.vehicles'))
-    
     form.vehicle_id.choices = [(v.id, f"{v.model} ({v.license_plate})") for v in user_vehicles]
-    
-    available_spots = []
-    
-    if request.method == 'POST' and form.validate():
-        lot_id = form.parking_lot_id.data
-        
-        # Find available spots in the selected lot
-        available_spots = ParkingSpot.query.filter_by(
-            lot_id=lot_id,
-            is_available=True
-        ).all()
-        
-        if not available_spots:
-            flash('Sorry, no spots available in the selected parking lot.', 'danger')
-    
-    # If confirmation form is submitted
-    if request.method == 'POST' and confirmation_form.validate():
-        spot_id = confirmation_form.spot_id.data
-        vehicle_id = form.vehicle_id.data
-        spot = ParkingSpot.query.get(spot_id)
-        vehicle = Vehicle.query.get(vehicle_id)
-        
-        if not spot or not spot.is_available:
-            flash('Selected parking spot is not available.', 'danger')
-            return redirect(url_for('user.book_parking'))
-        
-        if not vehicle or vehicle.user_id != current_user.id:
-            flash('Invalid vehicle selected.', 'danger')
-            return redirect(url_for('user.book_parking'))
-        
-        # Create a new booking
-        booking = Booking(
-            user_id=current_user.id, 
-            parking_spot_id=spot.id,
-            vehicle_id=vehicle.id,
-            vehicle_reg=vehicle.license_plate  # For backward compatibility
-        )
-        
-        db.session.add(booking)
-        db.session.commit()
-        
-        flash('Parking spot booked successfully!', 'success')
-        return redirect(url_for('user.dashboard'))
-    
-    return render_template('user/book_parking.html', 
+
+    active_booking = Booking.query.filter_by(
+        user_id=current_user.id,
+        booking_status='active'
+    ).first()
+
+    if request.method == 'POST':
+        if active_booking:
+            flash('You already have an active booking. Please release your current spot before booking a new one.', 'warning')
+            return redirect(url_for('user.dashboard'))
+
+        if 'spot_id' not in request.form and form.validate_on_submit():
+            lot_id = form.parking_lot_id.data
+            vehicle = Vehicle.query.get(form.vehicle_id.data)
+            # Filter available spots by vehicle type
+            available_spots = ParkingSpot.query.filter_by(
+                parking_lot_id=lot_id,
+                is_available=True,
+                spot_type=vehicle.vehicle_type
+            ).all()
+
+            if not available_spots:
+                flash('No spots available in the selected parking lot for your vehicle type.', 'danger')
+            return render_template('user/book_parking.html',
+                                   form=form,
+                                   confirmation_form=confirmation_form,
+                                   parking_lots=parking_lots,
+                                   user_vehicles=user_vehicles,
+                                   available_spots=available_spots,
+                                   selected_lot_id=lot_id,
+                                   selected_vehicle_id=form.vehicle_id.data)
+
+        elif 'spot_id' in request.form:
+            spot_id_raw = request.form.get('spot_id')
+            vehicle_id_raw = request.form.get('vehicle_id')
+            lot_id_raw = request.form.get('parking_lot_id')
+            # Accept vehicle_id from radio or select (radio: string, select: int)
+            error = None
+            if not spot_id_raw or not lot_id_raw or (vehicle_id_raw is None or str(vehicle_id_raw).strip() == ""):
+                error = 'Missing booking information. Please select a spot and vehicle.'
+            else:
+                try:
+                    spot_id = int(spot_id_raw)
+                    vehicle_id = int(vehicle_id_raw)
+                    lot_id = int(lot_id_raw)
+                except (ValueError, TypeError):
+                    error = 'Invalid booking information. Please try again.'
+
+            if error:
+                # Re-render the form with previous selections and available spots
+                selected_lot_id = lot_id_raw if lot_id_raw else None
+                selected_vehicle_id = vehicle_id_raw if vehicle_id_raw else None
+                available_spots = []
+                if selected_lot_id and selected_vehicle_id:
+                    try:
+                        vehicle = Vehicle.query.get(int(selected_vehicle_id))
+                        available_spots = ParkingSpot.query.filter_by(
+                            parking_lot_id=int(selected_lot_id),
+                            is_available=True,
+                            spot_type=vehicle.vehicle_type if vehicle else None
+                        ).all() if vehicle else []
+                    except Exception:
+                        available_spots = []
+                flash(error, 'danger')
+                return render_template('user/book_parking.html',
+                                      form=form,
+                                      confirmation_form=confirmation_form,
+                                      parking_lots=parking_lots,
+                                      user_vehicles=user_vehicles,
+                                      available_spots=available_spots,
+                                      selected_lot_id=selected_lot_id,
+                                      selected_vehicle_id=selected_vehicle_id)
+
+            try:
+                spot = ParkingSpot.query.get(spot_id)
+                vehicle = Vehicle.query.get(vehicle_id)
+
+                if not spot or not spot.is_available:
+                    flash('Selected parking spot is not available.', 'danger')
+                    return render_template('user/book_parking.html',
+                                          form=form,
+                                          confirmation_form=confirmation_form,
+                                          parking_lots=parking_lots,
+                                          user_vehicles=user_vehicles,
+                                          available_spots=[],
+                                          selected_lot_id=lot_id,
+                                          selected_vehicle_id=vehicle_id)
+
+                if not vehicle or vehicle.user_id != current_user.id:
+                    flash('Invalid vehicle selected.', 'danger')
+                    return render_template('user/book_parking.html',
+                                          form=form,
+                                          confirmation_form=confirmation_form,
+                                          parking_lots=parking_lots,
+                                          user_vehicles=user_vehicles,
+                                          available_spots=[],
+                                          selected_lot_id=lot_id,
+                                          selected_vehicle_id=vehicle_id)
+
+                # Backend check for spot compatibility
+                if spot.spot_type != vehicle.vehicle_type:
+                    flash('Selected spot is not compatible with your vehicle type.', 'danger')
+                    return render_template('user/book_parking.html',
+                                          form=form,
+                                          confirmation_form=confirmation_form,
+                                          parking_lots=parking_lots,
+                                          user_vehicles=user_vehicles,
+                                          available_spots=[],
+                                          selected_lot_id=lot_id,
+                                          selected_vehicle_id=vehicle_id)
+
+                booking = Booking(
+                    user_id=current_user.id,
+                    parking_spot_id=spot.id,
+                    vehicle_id=vehicle.id,
+                    vehicle_reg=vehicle.license_plate
+                )
+                spot.is_available = False
+
+                lot = ParkingLot.query.get(spot.parking_lot_id)
+                if lot:
+                    lot.available_spots = max(0, lot.available_spots - 1)
+                    db.session.add(lot)
+
+                db.session.add(booking)
+                db.session.add(spot)
+                db.session.commit()
+
+                flash('Parking spot booked successfully!', 'success')
+                return redirect(url_for('user.dashboard'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error booking parking spot: {str(e)}', 'danger')
+                return render_template('user/book_parking.html',
+                                      form=form,
+                                      confirmation_form=confirmation_form,
+                                      parking_lots=parking_lots,
+                                      user_vehicles=user_vehicles,
+                                      available_spots=[],
+                                      selected_lot_id=lot_id_raw,
+                                      selected_vehicle_id=vehicle_id_raw)
+
+    return render_template('user/book_parking.html',
                           form=form,
                           confirmation_form=confirmation_form,
                           parking_lots=parking_lots,
                           user_vehicles=user_vehicles,
-                          available_spots=available_spots)
+                          available_spots=[])
 
 # Release parking
 @user_bp.route('/release_parking', methods=['GET', 'POST'])
@@ -333,7 +424,7 @@ def release_parking():
     # Get current active booking
     booking = Booking.query.filter_by(
         user_id=current_user.id,
-        leaving_timestamp=None
+        booking_status='active'
     ).first()
     
     if not booking:
@@ -341,12 +432,16 @@ def release_parking():
         return redirect(url_for('user.dashboard'))
     
     if request.method == 'POST':
-        # End the booking
-        booking.end_booking()
-        db.session.commit()
-        
-        flash(f'Parking spot released successfully. Your total cost was ${booking.total_cost:.2f}', 'success')
-        return redirect(url_for('user.dashboard'))
+        # CSRF protection (if using Flask-WTF, this is handled automatically)
+        try:
+            booking.end_booking()
+            db.session.commit()
+            flash(f'Parking spot released successfully. Your total cost was ${booking.total_cost:.2f}', 'success')
+            return redirect(url_for('user.dashboard'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error releasing parking spot: {str(e)}', 'danger')
+            return redirect(url_for('user.release_parking'))
     
     # Get spot and lot info
     spot = ParkingSpot.query.get(booking.parking_spot_id)
@@ -355,7 +450,15 @@ def release_parking():
         lot = ParkingLot.query.get(spot.lot_id)
     
     # Calculate current duration and cost
-    current_duration = (datetime.now(timezone.utc) - booking.parking_timestamp).total_seconds() / 3600
+    parking_time = booking.parking_timestamp
+    # Ensure parking_time is timezone-aware (UTC)
+
+    if parking_time.tzinfo is None or parking_time.tzinfo.utcoffset(parking_time) is None:
+        parking_time = parking_time.replace(tzinfo=timezone.utc)
+    now_utc = datetime.now(timezone.utc)
+
+    # If now_utc is offset-aware and parking_time is offset-naive, make both UTC
+    current_duration = (now_utc - parking_time).total_seconds() / 3600
     current_cost = 0
     if lot:
         current_cost = current_duration * lot.price
@@ -464,6 +567,9 @@ def parking_stats():
     
     return jsonify(stats)
 
+
+
+
 # Vehicle management
 @user_bp.route('/vehicles', methods=['GET', 'POST'])
 @login_required
@@ -541,6 +647,11 @@ def search_parking():
     else:
         # If no search term, return all lots
         parking_lots = ParkingLot.query.all()
+    
+
+
+
+
     
     return render_template('user/search_parking.html', 
                           parking_lots=parking_lots,

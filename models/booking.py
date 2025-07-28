@@ -29,8 +29,19 @@ class Booking(db.Model):
         from models.parking_spot import ParkingSpot
         spot = ParkingSpot.query.get(parking_spot_id)
         if spot:
+            # Verify spot is still available before booking
+            if not spot.is_available:
+                raise ValueError("This parking spot is no longer available")
+                
             spot.is_available = False
             db.session.add(spot)
+            
+            # Also update the parent lot's available spots
+            from models.parking_lot import ParkingLot
+            lot = ParkingLot.query.get(spot.parking_lot_id)
+            if lot:
+                lot.available_spots = max(0, lot.available_spots - 1)
+                db.session.add(lot)
     
     def cancel_booking(self):
         """Cancel this booking and update the parking spot availability"""
@@ -45,11 +56,16 @@ class Booking(db.Model):
     
     def end_booking(self):
         """End this booking, calculate cost and mark the spot as available"""
+        from datetime import datetime, timezone
         self.leaving_timestamp = datetime.now(timezone.utc)
         self.booking_status = 'completed'
         
-        # Calculate duration in hours
-        duration = (self.leaving_timestamp - self.parking_timestamp).total_seconds() / 3600
+        # Calculate total cost
+        if self.parking_timestamp and self.leaving_timestamp:
+            parking_time = self.parking_timestamp
+            if parking_time.tzinfo is None or parking_time.tzinfo.utcoffset(parking_time) is None:
+                parking_time = parking_time.replace(tzinfo=timezone.utc)
+            duration_hours = (self.leaving_timestamp - parking_time).total_seconds() / 3600
         
         # Get parking rate from the lot
         from models.parking_spot import ParkingSpot
@@ -59,15 +75,19 @@ class Booking(db.Model):
         if spot:
             lot = ParkingLot.query.get(spot.parking_lot_id)
             if lot and hasattr(lot, 'price'):
-                hourly_rate = lot.price
-                self.total_cost = round(duration * hourly_rate, 2)
+                self.total_cost = round(duration_hours * lot.price, 2)
             else:
                 # Default rate if lot price not available
-                self.total_cost = round(duration * 2.50, 2)
+                self.total_cost = round(duration_hours * 2.50, 2)
             
             # Mark spot as available
             spot.is_available = True
             db.session.add(spot)
+            
+            # Update the lot's available spots
+            if lot:
+                lot.available_spots = lot.available_spots + 1
+                db.session.add(lot)
     
     def __repr__(self):
         return f'<Booking {self.id} for User {self.user_id}>'

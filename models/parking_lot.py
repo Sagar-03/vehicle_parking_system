@@ -74,9 +74,10 @@ class ParkingLot(db.Model):
     def update_available_spots(self):
         """Update the count of available spots based on associated ParkingSpot objects"""
         from models.parking_spot import ParkingSpot
-        available = ParkingSpot.query.filter_by(lot_id=self.id, is_available=True).count()
+        available = ParkingSpot.query.filter_by(parking_lot_id=self.id, is_available=True).count()
         self.available_spots = available
-        db.session.commit()
+        # Don't commit here, let the calling function handle the commit
+        # This prevents premature commits in transaction chains
     
     def available_spots_count(self):
         """Get the current count of available spots"""
@@ -85,7 +86,7 @@ class ParkingLot(db.Model):
     def occupied_spots_count(self):
         """Get the current count of occupied spots"""
         from models.parking_spot import ParkingSpot
-        return ParkingSpot.query.filter_by(lot_id=self.id, is_available=False).count()
+        return ParkingSpot.query.filter_by(parking_lot_id=self.id, is_available=False).count()
     
     def __repr__(self):
         return f'<ParkingLot {self.name}>'
