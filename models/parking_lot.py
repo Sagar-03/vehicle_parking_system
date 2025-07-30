@@ -10,9 +10,8 @@ class ParkingLot(db.Model):
     available_spots = db.Column(db.Integer, default=0)
     created_on = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
-    # Virtual attributes (not in the database)
-    _price = 2.50  # Default price
-    _total_spots = 0  # Default total spots
+    price = db.Column(db.Float, default=2.50, nullable=False)
+    total_spots = db.Column(db.Integer, default=0, nullable=False)
     
     # Relationships
     parking_spots = db.relationship('ParkingSpot', backref='parking_lot', lazy=True, cascade="all, delete-orphan")
@@ -22,45 +21,11 @@ class ParkingLot(db.Model):
         self.address = address
         self.pin_code = pin_code
         self.postcode_level = postcode_level
-        self._price = price  # Store as instance attribute (not in DB)
+        self.price = price
         self.available_spots = available_spots
-        self._total_spots = total_spots  # Store as instance attribute (not in DB)
+        self.total_spots = total_spots
     
-    @property
-    def price(self):
-        """Virtual attribute for price/hourly rate"""
-        return self._price
-    
-    @price.setter
-    def price(self, value):
-        self._price = value
-    
-    @property
-    def hourly_rate(self):
-        """Alias for price"""
-        return self._price
-        
-    @hourly_rate.setter
-    def hourly_rate(self, value):
-        self._price = value
-    
-    @property
-    def total_spots(self):
-        """Virtual attribute for total spots"""
-        return self._total_spots
-    
-    @total_spots.setter
-    def total_spots(self, value):
-        self._total_spots = value
-    
-    @property
-    def maximum_spots(self):
-        """Alias for total_spots"""
-        return self._total_spots
-    
-    @maximum_spots.setter
-    def maximum_spots(self, value):
-        self._total_spots = value
+    # Removed property/setter for price and total_spots. Use only real columns.
     
     @property
     def prime_location_name(self):

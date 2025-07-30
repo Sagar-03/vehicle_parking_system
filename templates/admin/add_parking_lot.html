@@ -3,6 +3,17 @@
 {% block title %}Add Parking Lot - Vehicle Parking System{% endblock %}
 
 {% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card shadow">
@@ -12,82 +23,114 @@
             <div class="card-body">
                 <form method="POST" action="{{ url_for('admin.add_parking_lot') }}">
                     {{ form.hidden_tag() }}
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="name" class="form-label">Parking Lot Name:</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control") }}
+                            {% for error in form.name.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
                         </div>
                         <div class="col-md-6">
-                            <label for="location" class="form-label">Location:</label>
-                            <input type="text" class="form-control" id="location" name="location" required>
+                            {{ form.location.label(class="form-label") }}
+                            {{ form.location(class="form-control") }}
+                            {% for error in form.location.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="total_spots" class="form-label">Total Parking Spots:</label>
-                            <input type="number" class="form-control" id="total_spots" name="total_spots" min="1" required>
+                            {{ form.address.label(class="form-label") }}
+                            {{ form.address(class="form-control") }}
+                            {% for error in form.address.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
                         </div>
                         <div class="col-md-6">
-                            <label for="hourly_rate" class="form-label">Hourly Rate ($):</label>
-                            <input type="number" class="form-control" id="hourly_rate" name="hourly_rate" min="0" step="0.01" required>
+                            {{ form.pin_code.label(class="form-label") }}
+                            {{ form.pin_code(class="form-control") }}
+                            {% for error in form.pin_code.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="opening_time" class="form-label">Opening Time:</label>
-                            <input type="time" class="form-control" id="opening_time" name="opening_time" required>
+                            {{ form.total_spots.label(class="form-label") }}
+                            {{ form.total_spots(class="form-control") }}
+                            {% for error in form.total_spots.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
                         </div>
                         <div class="col-md-6">
-                            <label for="closing_time" class="form-label">Closing Time:</label>
-                            <input type="time" class="form-control" id="closing_time" name="closing_time" required>
+                            {{ form.hourly_rate.label(class="form-label") }}
+                            {{ form.hourly_rate(class="form-control") }}
+                            {% for error in form.hourly_rate.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
                         </div>
                     </div>
-                    
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.opening_time.label(class="form-label") }}
+                            {{ form.opening_time(class="form-control") }}
+                            {% for error in form.opening_time.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.closing_time.label(class="form-label") }}
+                            {{ form.closing_time(class="form-control") }}
+                            {% for error in form.closing_time.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
                     <div class="mb-3">
-                        <label for="description" class="form-label">Description:</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows=3) }}
+                        {% for error in form.description.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
                     </div>
-                    
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
-                            <label class="form-check-label" for="is_active">
-                                Active
-                            </label>
-                        </div>
+
+                    <div class="form-check mb-3">
+                        {{ form.is_active(class="form-check-input") }}
+                        {{ form.is_active.label(class="form-check-label") }}
+                        {% for error in form.is_active.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
                     </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <h5>Parking Spot Layout</h5>
-                            <p class="text-muted">Design your parking lot layout by configuring rows and columns</p>
-                        </div>
-                    </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="num_rows" class="form-label">Number of Rows:</label>
-                            <input type="number" class="form-control" id="num_rows" name="num_rows" min="1" value="5" required>
+                            {{ form.num_rows.label(class="form-label") }}
+                            {{ form.num_rows(class="form-control") }}
+                            {% for error in form.num_rows.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
                         </div>
                         <div class="col-md-6">
-                            <label for="num_cols" class="form-label">Spots per Row:</label>
-                            <input type="number" class="form-control" id="num_cols" name="num_cols" min="1" value="10" required>
+                            {{ form.num_cols.label(class="form-label") }}
+                            {{ form.num_cols(class="form-control") }}
+                            {% for error in form.num_cols.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
                         </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <h6>Preview Layout</h6>
-                        <div id="layout_preview" class="parking-grid-layout mb-3">
-                            <!-- JavaScript will generate the layout preview here -->
-                        </div>
-                    </div>
-                    
+
+                    <!-- Layout preview element -->
+                    <div id="layout_preview" class="parking-grid-layout mb-3"></div>
+
                     <div class="d-flex justify-content-between">
                         <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Add Parking Lot</button>
+                        {{ form.submit(class="btn btn-primary") }}
                     </div>
                 </form>
             </div>
@@ -98,21 +141,27 @@
 
 {% block scripts %}
 <script>
-    // Generate layout preview
     function generateLayoutPreview() {
-        const numRows = parseInt(document.getElementById('num_rows').value) || 5;
-        const numCols = parseInt(document.getElementById('num_cols').value) || 10;
-        const totalSpots = parseInt(document.getElementById('total_spots').value) || (numRows * numCols);
-        
         const layoutPreview = document.getElementById('layout_preview');
+        if (!layoutPreview) return;
+
+        const numRowsInput = document.getElementById('num_rows');
+        const numColsInput = document.getElementById('num_cols');
+        const totalSpotsInput = document.getElementById('total_spots');
+
+        if (!numRowsInput || !numColsInput || !totalSpotsInput) return;
+
+        const numRows = parseInt(numRowsInput.value) || 5;
+        const numCols = parseInt(numColsInput.value) || 10;
+        const totalSpots = parseInt(totalSpotsInput.value) || (numRows * numCols);
+
         layoutPreview.innerHTML = '';
-        
         let spotCount = 1;
-        
+
         for (let i = 0; i < numRows; i++) {
             const row = document.createElement('div');
             row.className = 'parking-row';
-            
+
             for (let j = 0; j < numCols; j++) {
                 if (spotCount <= totalSpots) {
                     const spot = document.createElement('div');
@@ -122,39 +171,34 @@
                     spotCount++;
                 }
             }
-            
+
             layoutPreview.appendChild(row);
         }
     }
-    
-    // Event listeners for layout changes
-    document.getElementById('num_rows').addEventListener('input', generateLayoutPreview);
-    document.getElementById('num_cols').addEventListener('input', generateLayoutPreview);
-    document.getElementById('total_spots').addEventListener('input', generateLayoutPreview);
-    
-    // Initialize the layout preview
-    document.addEventListener('DOMContentLoaded', function() {
-        // Set default times
-        document.getElementById('opening_time').value = '08:00';
-        document.getElementById('closing_time').value = '20:00';
-        
-        // Generate initial layout preview
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const numRowsInput = document.getElementById('num_rows');
+        const numColsInput = document.getElementById('num_cols');
+        const totalSpotsInput = document.getElementById('total_spots');
+
+        // Attach event listeners only if inputs exist
+        if (numRowsInput && numColsInput && totalSpotsInput) {
+            numRowsInput.addEventListener('input', generateLayoutPreview);
+            numColsInput.addEventListener('input', generateLayoutPreview);
+            totalSpotsInput.addEventListener('input', generateLayoutPreview);
+
+            numRowsInput.addEventListener('change', function () {
+                totalSpotsInput.value = parseInt(numRowsInput.value || 1) * parseInt(numColsInput.value || 1);
+                generateLayoutPreview();
+            });
+
+            numColsInput.addEventListener('change', function () {
+                totalSpotsInput.value = parseInt(numRowsInput.value || 1) * parseInt(numColsInput.value || 1);
+                generateLayoutPreview();
+            });
+        }
+
         generateLayoutPreview();
-        
-        // Update total spots when rows or columns change
-        document.getElementById('num_rows').addEventListener('change', function() {
-            const numRows = parseInt(this.value) || 5;
-            const numCols = parseInt(document.getElementById('num_cols').value) || 10;
-            document.getElementById('total_spots').value = numRows * numCols;
-            generateLayoutPreview();
-        });
-        
-        document.getElementById('num_cols').addEventListener('change', function() {
-            const numRows = parseInt(document.getElementById('num_rows').value) || 5;
-            const numCols = parseInt(this.value) || 10;
-            document.getElementById('total_spots').value = numRows * numCols;
-            generateLayoutPreview();
-        });
     });
 </script>
 {% endblock %}
