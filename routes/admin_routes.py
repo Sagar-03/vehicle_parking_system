@@ -183,7 +183,7 @@ def dashboard():
     for date in dates:
         # Simulate daily revenue for now
         daily_revenue.append(random.randint(500, 2000))
-    
+                      
     # Get list of users
     users = User.query.all()
     
@@ -214,48 +214,53 @@ def dashboard():
 @admin_required
 def add_parking_lot():
     form = ParkingLotForm(request.form)
-    
+    if request.method == 'POST':
+        print(form.errors)  # See exact validation failures
     if request.method == 'POST' and form.validate():
-        # Create new parking lot
-        new_lot = ParkingLot(
-            name=form.name.data,
-            address=form.address.data,
-            pin_code=form.pin_code.data,
-            price=float(form.hourly_rate.data),
-            total_spots=form.total_spots.data
+        # Extract form data
+        name = form.name.data
+        address = form.address.data
+        pin_code = form.pin_code.data
+        price = float(form.hourly_rate.data)
+        total_spots = int(form.total_spots.data)
+        num_rows = int(form.num_rows.data)
+        num_cols = int(form.num_cols.data)
+        location = form.location.data if hasattr(form, 'location') else ''
+        description = form.description.data if hasattr(form, 'description') else ''
+        is_active = form.is_active.data if hasattr(form, 'is_active') else True
+        postcode_level = None
+        # Create the parking lot
+        lot = ParkingLot(
+            name=name,
+            address=address,
+            pin_code=pin_code,
+            price=price,
+            total_spots=total_spots,
+            available_spots=total_spots,
+            postcode_level=postcode_level
         )
-        
-        db.session.add(new_lot)
+        db.session.add(lot)
         db.session.commit()
-        
-        # Create parking spots for the lot
-        num_rows = form.num_rows.data
-        num_cols = form.num_cols.data
-        
-        for i in range(1, form.total_spots.data + 1):
-            # Set some spots as special types (every 10th spot is disabled, every 15th is electric)
-            spot_type = 'standard'
-            if i % 10 == 0:
-                spot_type = 'disabled'
-            elif i % 15 == 0:
-                spot_type = 'electric'
-                
-            new_spot = ParkingSpot(
-                lot_id=new_lot.id,
-                spot_number=i,
-                spot_type=spot_type
-            )
-            db.session.add(new_spot)
-        
+        # Generate parking spots for the lot
+        spot_count = 1
+        for row in range(1, num_rows + 1):
+            for col in range(1, num_cols + 1):
+                if spot_count > total_spots:
+                    break
+                spot_type = 'standard'
+                spot = ParkingSpot(
+                    lot_id=lot.id,
+                    spot_number=spot_count,
+                    spot_type=spot_type,
+                    is_available=True
+                )
+                db.session.add(spot)
+                spot_count += 1
         db.session.commit()
-        
-        # Update available spots count in the lot
-        new_lot.update_available_spots()
-        
-        flash(f'Parking lot "{form.name.data}" with {form.total_spots.data} spots added successfully!', 'success')
+        flash('Parking lot added successfully!', 'success')
         return redirect(url_for('admin.dashboard'))
-    
     return render_template('admin/add_parking_lot.html', form=form)
+
 
 # View all parking spots
 @admin_bp.route('/view_parking_spots')

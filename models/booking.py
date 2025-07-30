@@ -2,6 +2,15 @@ from extensions import db
 from datetime import datetime, timezone
 
 class Booking(db.Model):
+    @property
+    def username(self):
+        """Return the username of the user who made this booking, or None if not found."""
+        if hasattr(self, 'user') and self.user:
+            return self.user.username
+        # fallback if relationship is not loaded
+        from models.user import User
+        user = User.query.get(self.user_id)
+        return user.username if user else None
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     parking_spot_id = db.Column(db.Integer, db.ForeignKey('parking_spot.id'), nullable=False)
