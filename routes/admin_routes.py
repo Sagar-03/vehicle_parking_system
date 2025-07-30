@@ -338,20 +338,33 @@ def statistics():
     total_bookings = len(filtered_bookings)
     total_revenue = sum(b.total_cost or 0 for b in filtered_bookings if b.total_cost)
     
-    # Calculate occupancy rate
+    # Calculate occupancy rate based on filtered bookings
     total_spots = ParkingSpot.query.count()
-    if total_spots > 0:
-        average_occupancy = (ParkingSpot.query.filter_by(is_available=False).count() / total_spots) * 100
+    if total_spots > 0 and filtered_bookings:
+        # Calculate total hours in the selected period
+        total_hours = (end_date - start_date).total_seconds() / 3600
+        # Calculate total occupied hours from bookings
+        occupied_hours = 0
+        for b in filtered_bookings:
+            check_in = b.parking_timestamp
+            check_out = b.leaving_timestamp or end_date
+            # Only count overlap within the selected range
+            if check_in < start_date:
+                check_in = start_date
+            if check_out > end_date:
+                check_out = end_date
+            duration = (check_out - check_in).total_seconds() / 3600
+            if duration > 0:
+                occupied_hours += duration
+        # Average occupancy = (total occupied hours) / (total spots * total hours) * 100
+        average_occupancy = (occupied_hours / (total_spots * total_hours)) * 100 if total_hours > 0 else 0
     else:
         average_occupancy = 0
-    
-    # Get data for charts
-    # In a real app, you would aggregate this data more efficiently
-    
+
     return render_template('admin/statistics.html',
                           total_bookings=total_bookings,
                           total_revenue=total_revenue,
-                          average_occupancy=average_occupancy,
+                          avg_occupancy=round(average_occupancy, 2),
                           start_date=start_date,
                           end_date=end_date)
 

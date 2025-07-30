@@ -196,7 +196,7 @@
                             {% for spot in parking_spots %}
                                 <div class="parking-spot {% if spot.is_occupied %}occupied{% else %}available{% endif %}" 
                                      data-spot-id="{{ spot.id }}" data-bs-toggle="tooltip" 
-                                     title="{% if spot.is_occupied %}Occupied by {{ spot.user.username }}{% else %}Available{% endif %}">
+                                     title="{% if spot.is_occupied %}{% if spot.user and spot.user.username %}Occupied by {{ spot.user.username }}{% else %}Occupied{% endif %}{% else %}Available{% endif %}">
                                     {{ spot.spot_number }}
                                 </div>
                             {% endfor %}
