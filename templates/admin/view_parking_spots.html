@@ -230,6 +230,32 @@
             </div>
             <div class="modal-body">
                 <table class="table">
+                    <tr><th>Spot ID:</th><td id="modal-spot-id"></td></tr>
+                    <tr><th>Parking Lot:</th><td id="modal-lot-name"></td></tr>
+                    <tr><th>Spot Number:</th><td id="modal-spot-number"></td></tr>
+                    <tr><th>Spot Type:</th><td id="modal-spot-type"></td></tr>
+                    <tr><th>Status:</th><td id="modal-status"></td></tr>
+                    <tr id="modal-user-row" style="display: none;"><th>Current User:</th><td id="modal-current-user"></td></tr>
+                    <tr id="modal-vehicle-row" style="display: none;"><th>Vehicle:</th><td id="modal-vehicle"></td></tr>
+                    <tr id="modal-timestamp-row" style="display: none;"><th>Since:</th><td id="modal-timestamp"></td></tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Spot Details Modal -->
+<div class="modal fade" id="spotDetailsModal" tabindex="-1" aria-labelledby="spotDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="spotDetailsModalLabel">Parking Spot Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table">
                     <tr>
                         <th>Spot ID:</th>
                         <td id="modal-spot-id"></td>
@@ -250,15 +276,15 @@
                         <th>Status:</th>
                         <td id="modal-status"></td>
                     </tr>
-                    <tr id="modal-user-row" style="display: none;">
-                        <th>Current User:</th>
+                    <tr id="modal-user-row" style="display:none;">
+                        <th>User:</th>
                         <td id="modal-current-user"></td>
                     </tr>
-                    <tr id="modal-vehicle-row" style="display: none;">
+                    <tr id="modal-vehicle-row" style="display:none;">
                         <th>Vehicle:</th>
                         <td id="modal-vehicle"></td>
                     </tr>
-                    <tr id="modal-timestamp-row" style="display: none;">
+                    <tr id="modal-timestamp-row" style="display:none;">
                         <th>Since:</th>
                         <td id="modal-timestamp"></td>
                     </tr>

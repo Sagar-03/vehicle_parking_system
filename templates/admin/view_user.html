@@ -21,19 +21,11 @@
 <div class="row">
     <div class="col-12">
         <div class="card shadow">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">Registered Users</h5>
-                <div class="input-group" style="width: 300px;">
-                    <input type="text" id="userSearchInput" class="form-control" placeholder="Search users...">
-                    <button class="btn btn-light" type="button" id="searchButton">
-                        <i class="bi bi-search"></i> Search
-                    </button>
-                </div>
-            </div>
             <div class="card-body">
+                <h5 class="card-title mb-0">Registered Users</h5>
                 {% if users %}
                 <div class="table-responsive">
-                    <table class="table table-hover" id="usersTable">
+                    <table class="table table-hover">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -57,18 +49,10 @@
                                 <td>{{ user.registered_on.strftime('%Y-%m-%d') }}</td>
                                 <td>{{ user.vehicles|length }}</td>
                                 <td>
-                                    <div class="d-flex">
-                                        <button type="button" class="btn btn-sm btn-info view-user-btn me-2" 
-                                                data-bs-toggle="modal" data-bs-target="#viewUserModal" 
-                                                data-user-id="{{ user.id }}">
-                                            View Details
-                                        </button>
-                                        <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" 
-                                              onsubmit="return confirm('Are you sure you want to delete this user?');">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                        </form>
-                                    </div>
+                                    <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                    </form>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -76,212 +60,11 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="alert alert-info">
                     <p>No registered users found.</p>
-                </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
-
-<!-- User Details Modal -->
-<div class="modal fade" id="viewUserModal" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="viewUserModalLabel">User Details</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="userDetails">
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <h5>Personal Information</h5>
-                            <table class="table">
-                                <tr>
-                                    <th>Username:</th>
-                                    <td id="modal-username"></td>
-                                </tr>
-                                <tr>
-                                    <th>Full Name:</th>
-                                    <td id="modal-fullname"></td>
-                                </tr>
-                                <tr>
-                                    <th>Email:</th>
-                                    <td id="modal-email"></td>
-                                </tr>
-                                <tr>
-                                    <th>Phone:</th>
-                                    <td id="modal-phone"></td>
-                                </tr>
-                                <tr>
-                                    <th>Registered:</th>
-                                    <td id="modal-registered"></td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Statistics</h5>
-                            <table class="table">
-                                <tr>
-                                    <th>Total Bookings:</th>
-                                    <td id="modal-bookings"></td>
-                                </tr>
-                                <tr>
-                                    <th>Active Bookings:</th>
-                                    <td id="modal-active-bookings"></td>
-                                </tr>
-                                <tr>
-                                    <th>Vehicles:</th>
-                                    <td id="modal-vehicles"></td>
-                                </tr>
-                                <tr>
-                                    <th>Total Spent:</th>
-                                    <td id="modal-spent"></td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-12">
-                            <h5>User's Vehicles</h5>
-                            <table class="table table-striped" id="modal-vehicles-table">
-                                <thead>
-                                    <tr>
-                                        <th>Model</th>
-                                        <th>License Plate</th>
-                                        <th>Type</th>
-                                        <th>Color</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Vehicle rows will be inserted here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <h5>Recent Bookings</h5>
-                            <table class="table table-striped" id="modal-bookings-table">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Parking Spot</th>
-                                        <th>Vehicle</th>
-                                        <th>Check-in</th>
-                                        <th>Check-out</th>
-                                        <th>Amount</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Booking rows will be inserted here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    // Search functionality
-    document.getElementById('userSearchInput').addEventListener('keyup', function() {
-        const searchText = this.value.toLowerCase();
-        const table = document.getElementById('usersTable');
-        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-        
-        Array.from(rows).forEach(row => {
-            let found = false;
-            Array.from(row.getElementsByTagName('td')).forEach(cell => {
-                if (cell.textContent.toLowerCase().indexOf(searchText) > -1) {
-                    found = true;
-                }
-            });
-            row.style.display = found ? '' : 'none';
-        });
-    });
-    
-    // View user details functionality (AJAX version)
-    document.querySelectorAll('.view-user-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const userId = this.getAttribute('data-user-id');
-            fetch(`/admin/user_details/${userId}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Personal Info
-                    document.getElementById('modal-username').textContent = data.username || '';
-                    document.getElementById('modal-fullname').textContent = (data.first_name || '') + ' ' + (data.last_name || '');
-                    document.getElementById('modal-email').textContent = data.email || '';
-                    document.getElementById('modal-phone').textContent = data.phone || 'N/A';
-                    document.getElementById('modal-registered').textContent = data.registered_on || '';
-                    document.getElementById('modal-vehicles').textContent = data.vehicles ? data.vehicles.length : 0;
-
-                    // Statistics
-                    document.getElementById('modal-bookings').textContent = data.total_bookings || 0;
-                    document.getElementById('modal-active-bookings').textContent = data.active_bookings || 0;
-                    document.getElementById('modal-spent').textContent = data.total_spent ? `$${data.total_spent.toFixed(2)}` : '$0.00';
-
-                    // Vehicles Table
-                    const vehiclesTable = document.getElementById('modal-vehicles-table').getElementsByTagName('tbody')[0];
-                    vehiclesTable.innerHTML = '';
-                    if (data.vehicles && data.vehicles.length > 0) {
-                        data.vehicles.forEach(vehicle => {
-                            const row = vehiclesTable.insertRow();
-                            row.insertCell().textContent = vehicle.model || '';
-                            row.insertCell().textContent = vehicle.license_plate || '';
-                            row.insertCell().textContent = vehicle.vehicle_type || '';
-                            row.insertCell().textContent = vehicle.color || '';
-                        });
-                    }
-
-                    // Bookings Table
-                    const bookingsTable = document.getElementById('modal-bookings-table').getElementsByTagName('tbody')[0];
-                    bookingsTable.innerHTML = '';
-                    if (data.bookings && data.bookings.length > 0) {
-                        data.bookings.forEach(booking => {
-                            const row = bookingsTable.insertRow();
-                            row.insertCell().textContent = booking.id;
-                            row.insertCell().textContent = booking.spot;
-                            row.insertCell().textContent = booking.vehicle;
-                            row.insertCell().textContent = booking.checkin;
-                            row.insertCell().textContent = booking.checkout || '--';
-                            row.insertCell().textContent = booking.amount ? `$${booking.amount.toFixed(2)}` : '--';
-                            const statusCell = row.insertCell();
-                            const statusSpan = document.createElement('span');
-                            statusSpan.className = 'badge ' + (booking.status === 'Active' ? 'bg-success' : 'bg-info');
-                            statusSpan.textContent = booking.status;
-                            statusCell.appendChild(statusSpan);
-                        });
-                    }
-                })
-                .catch(() => {
-                    // fallback: clear modal fields
-                    document.getElementById('modal-username').textContent = '';
-                    document.getElementById('modal-fullname').textContent = '';
-                    document.getElementById('modal-email').textContent = '';
-                    document.getElementById('modal-phone').textContent = '';
-                    document.getElementById('modal-registered').textContent = '';
-                    document.getElementById('modal-vehicles').textContent = 0;
-                    document.getElementById('modal-bookings').textContent = 0;
-                    document.getElementById('modal-active-bookings').textContent = 0;
-                    document.getElementById('modal-spent').textContent = '$0.00';
-                    document.getElementById('modal-vehicles-table').getElementsByTagName('tbody')[0].innerHTML = '';
-                    document.getElementById('modal-bookings-table').getElementsByTagName('tbody')[0].innerHTML = '';
-                });
-        });
-    });
-</script>
 {% endblock %}
 
