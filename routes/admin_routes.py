@@ -1,4 +1,3 @@
-
 # Imports (always first)
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, login_user, logout_user, current_user
@@ -59,6 +58,34 @@ def edit_parking_lot(lot_id):
     flash('Parking lot updated successfully!', 'success')
     return redirect(url_for('admin.view_parking_spots'))
 
+
+@admin_bp.route('/spot_details/<int:spot_id>', methods=['GET'])
+@login_required
+@admin_required
+def spot_details(spot_id):
+    spot = ParkingSpot.query.get_or_404(spot_id)
+    booking = spot.current_booking()
+
+    if not booking:
+        return jsonify({'error': 'No active booking found'}), 404
+
+    user = User.query.get(booking.user_id)
+    vehicle = Vehicle.query.filter_by(id=booking.vehicle_id).first()
+
+    return jsonify({
+        'user': {
+            'username': user.username,
+            'email': user.email,
+        },
+        'vehicle': {
+            'type': vehicle.vehicle_type if vehicle else 'N/A',
+            'plate': vehicle.license_plate if vehicle else booking.vehicle_reg
+        },
+        'booking': {
+            'check_in': booking.parking_timestamp.strftime('%Y-%m-%d %H:%M'),
+            'status': booking.booking_status
+        }
+    })
 
 # Form classes (must be defined before use)
 class LoginForm(FlaskForm):

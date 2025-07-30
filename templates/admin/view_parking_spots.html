@@ -107,6 +107,14 @@
                                             data-lot-price="{{ spot.parking_lot.price }}">
                                         Edit
                                     </button>
+                                    {% if not spot.is_available %}
+                                    <button class="btn btn-sm btn-primary view-details-btn"
+                                            data-spot-id="{{ spot.id }}"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#spotDetailsModal">
+                                        View
+                                    </button>
+                                    {% endif %}
                                     {% else %}
                                     <span class="text-muted">N/A</span>
                                     {% endif %}
@@ -205,31 +213,23 @@
     </div>
 </div>
 
-<!-- Spot Details Modal -->
-<div class="modal fade" id="spotDetailsModal" tabindex="-1" aria-labelledby="spotDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="spotDetailsModalLabel">Parking Spot Details</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <table class="table">
-                    <tr><th>Spot ID:</th><td id="modal-spot-id"></td></tr>
-                    <tr><th>Parking Lot:</th><td id="modal-lot-name"></td></tr>
-                    <tr><th>Spot Number:</th><td id="modal-spot-number"></td></tr>
-                    <tr><th>Spot Type:</th><td id="modal-spot-type"></td></tr>
-                    <tr><th>Status:</th><td id="modal-status"></td></tr>
-                    <tr id="modal-user-row" style="display: none;"><th>Current User:</th><td id="modal-current-user"></td></tr>
-                    <tr id="modal-vehicle-row" style="display: none;"><th>Vehicle:</th><td id="modal-vehicle"></td></tr>
-                    <tr id="modal-timestamp-row" style="display: none;"><th>Since:</th><td id="modal-timestamp"></td></tr>
-                </table>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
+<!-- Spot Details Modal (New) -->
+<div class="modal fade" id="spotDetailsModal" tabindex="-1" aria-labelledby="spotDetailsLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title" id="spotDetailsLabel">Parking Spot Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>User:</strong> <span id="details-username"></span></p>
+        <p><strong>Email:</strong> <span id="details-email"></span></p>
+        <p><strong>Vehicle:</strong> <span id="details-vehicle"></span></p>
+        <p><strong>Check-In Time:</strong> <span id="details-checkin"></span></p>
+        <p><strong>Status:</strong> <span id="details-status"></span></p>
+      </div>
     </div>
+  </div>
 </div>
 <!-- Spot Details Modal -->
 <div class="modal fade" id="spotDetailsModal" tabindex="-1" aria-labelledby="spotDetailsModalLabel" aria-hidden="true">
@@ -348,98 +348,86 @@
         document.getElementById('edit-lot-address').value = this.getAttribute('data-lot-address');
         document.getElementById('edit-lot-pin').value = this.getAttribute('data-lot-pin');
         document.getElementById('edit-lot-price').value = this.getAttribute('data-lot-price');
-
         // Update form action dynamically
         const form = document.getElementById('editLotForm');
         const lotId = this.getAttribute('data-lot-id');
         form.action = `/admin/edit_parking_lot/${lotId}`;
       });
     });
+
+    // View details button logic
+    document.querySelectorAll('.view-details-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const spotId = this.getAttribute('data-spot-id');
+            fetch(`/admin/spot_details/${spotId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    document.getElementById('details-username').textContent = data.user.username;
+                    document.getElementById('details-email').textContent = data.user.email;
+                    document.getElementById('details-vehicle').textContent = `${data.vehicle.type} - ${data.vehicle.plate}`;
+                    document.getElementById('details-checkin').textContent = data.booking.check_in;
+                    document.getElementById('details-status').textContent = data.booking.status;
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Failed to load booking details.');
+                });
+        });
+    });
   });
-    // Initialize spot status chart
-    const spotStatusCtx = document.getElementById('spotStatusChart').getContext('2d');
-    const spotStatusChart = new Chart(spotStatusCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Available', 'Occupied'],
-            datasets: [{
-                data: [{{ available_spots }}, {{ occupied_spots }}],
-                backgroundColor: [
-                    'rgba(40, 167, 69, 0.6)',
-                    'rgba(220, 53, 69, 0.6)'
-                ],
-                borderColor: [
-                    'rgba(40, 167, 69, 1)',
-                    'rgba(220, 53, 69, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                },
-                title: {
-                    display: true,
-                    text: 'Parking Spot Status'
-                }
-            }
-        }
-    });
-    
-    // Handle spot details modal
-    document.querySelectorAll('[data-bs-target="#spotDetailsModal"]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const spotId = this.getAttribute('data-spot-id');
-            const spotNumber = this.getAttribute('data-spot-number');
-            const lotName = this.getAttribute('data-lot-name');
-            const spotType = this.getAttribute('data-spot-type');
-            
-            document.getElementById('modal-spot-id').textContent = spotId;
-            document.getElementById('modal-lot-name').textContent = lotName;
-            document.getElementById('modal-spot-number').textContent = spotNumber;
-            document.getElementById('modal-spot-type').textContent = spotType.charAt(0).toUpperCase() + spotType.slice(1);
-            
-            // In a real application, you would fetch spot details via AJAX
-            const isAvailable = this.closest('tr').querySelector('.badge').textContent.trim() === 'Available';
-            document.getElementById('modal-status').textContent = isAvailable ? 'Available' : 'Occupied';
-            
-            // Show/hide user-related rows based on availability
-            document.getElementById('modal-user-row').style.display = isAvailable ? 'none' : 'table-row';
-            document.getElementById('modal-vehicle-row').style.display = isAvailable ? 'none' : 'table-row';
-            document.getElementById('modal-timestamp-row').style.display = isAvailable ? 'none' : 'table-row';
-            
-            // For demo, populate with dummy data
-            if (!isAvailable) {
-                document.getElementById('modal-current-user').textContent = 'John Smith (ID: 123)';
-                document.getElementById('modal-vehicle').textContent = 'Toyota Camry (ABC123)';
-                document.getElementById('modal-timestamp').textContent = 'May 4, 2025 10:30 AM';
-            }
-        });
-    });
-    
-    // Handle mark as occupied modal
-    document.querySelectorAll('[data-bs-target="#markOccupiedModal"]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const spotId = this.getAttribute('data-spot-id');
-            const spotNumber = this.getAttribute('data-spot-number');
-            
-            document.getElementById('occupy-spot-id').value = spotId;
-            document.getElementById('occupy-spot-number').textContent = spotNumber;
-        });
-    });
-    
-    // Handle release spot modal
-    document.querySelectorAll('[data-bs-target="#releaseSpotModal"]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const spotId = this.getAttribute('data-spot-id');
-            const spotNumber = this.getAttribute('data-spot-number');
-            
-            document.getElementById('release-spot-id').value = spotId;
-            document.getElementById('release-spot-number').textContent = spotNumber;
-        });
-    });
+  // Initialize spot status chart
+  const spotStatusCtx = document.getElementById('spotStatusChart').getContext('2d');
+  const spotStatusChart = new Chart(spotStatusCtx, {
+      type: 'doughnut',
+      data: {
+          labels: ['Available', 'Occupied'],
+          datasets: [{
+              data: [{{ available_spots }}, {{ occupied_spots }}],
+              backgroundColor: [
+                  'rgba(40, 167, 69, 0.6)',
+                  'rgba(220, 53, 69, 0.6)'
+              ],
+              borderColor: [
+                  'rgba(40, 167, 69, 1)',
+                  'rgba(220, 53, 69, 1)'
+              ],
+              borderWidth: 1
+          }]
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: {
+                  position: 'bottom',
+              },
+              title: {
+                  display: true,
+                  text: 'Parking Spot Status'
+              }
+          }
+      }
+  });
+  // Handle mark as occupied modal
+  document.querySelectorAll('[data-bs-target="#markOccupiedModal"]').forEach(btn => {
+      btn.addEventListener('click', function() {
+          const spotId = this.getAttribute('data-spot-id');
+          const spotNumber = this.getAttribute('data-spot-number');
+          document.getElementById('occupy-spot-id').value = spotId;
+          document.getElementById('occupy-spot-number').textContent = spotNumber;
+      });
+  });
+  // Handle release spot modal
+  document.querySelectorAll('[data-bs-target="#releaseSpotModal"]').forEach(btn => {
+      btn.addEventListener('click', function() {
+          const spotId = this.getAttribute('data-spot-id');
+          const spotNumber = this.getAttribute('data-spot-number');
+          document.getElementById('release-spot-id').value = spotId;
+          document.getElementById('release-spot-number').textContent = spotNumber;
+      });
+  });
 </script>
 {% endblock %}
