@@ -213,80 +213,73 @@
         });
     });
     
-    // View user details functionality
+    // View user details functionality (AJAX version)
     document.querySelectorAll('.view-user-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const userId = this.getAttribute('data-user-id');
-            
-            // In a real application, you would make an AJAX call to get user details
-            // For now, we'll use dummy data for demonstration
-            
-            // Fetch the user details from the current page
-            const row = this.closest('tr');
-            const username = row.cells[1].textContent;
-            const fullName = row.cells[2].textContent;
-            const email = row.cells[3].textContent;
-            const phone = row.cells[4].textContent;
-            const registered = row.cells[5].textContent;
-            const vehicles = row.cells[6].textContent;
-            
-            // Populate the modal
-            document.getElementById('modal-username').textContent = username;
-            document.getElementById('modal-fullname').textContent = fullName;
-            document.getElementById('modal-email').textContent = email;
-            document.getElementById('modal-phone').textContent = phone;
-            document.getElementById('modal-registered').textContent = registered;
-            document.getElementById('modal-vehicles').textContent = vehicles;
-            
-            // For the statistics, we would fetch these from the server
-            document.getElementById('modal-bookings').textContent = '5'; // Dummy value
-            document.getElementById('modal-active-bookings').textContent = '1'; // Dummy value
-            document.getElementById('modal-spent').textContent = '$125.50'; // Dummy value
-            
-            // Clear and populate vehicles table
-            const vehiclesTable = document.getElementById('modal-vehicles-table').getElementsByTagName('tbody')[0];
-            vehiclesTable.innerHTML = '';
-            
-            // Dummy vehicles data
-            const vehiclesData = [
-                { model: 'Toyota Camry', license: 'ABC123', type: 'Standard', color: 'Silver' },
-                { model: 'Honda Civic', license: 'XYZ789', type: 'Compact', color: 'Blue' }
-            ];
-            
-            vehiclesData.forEach(vehicle => {
-                const row = vehiclesTable.insertRow();
-                row.insertCell().textContent = vehicle.model;
-                row.insertCell().textContent = vehicle.license;
-                row.insertCell().textContent = vehicle.type;
-                row.insertCell().textContent = vehicle.color;
-            });
-            
-            // Clear and populate bookings table
-            const bookingsTable = document.getElementById('modal-bookings-table').getElementsByTagName('tbody')[0];
-            bookingsTable.innerHTML = '';
-            
-            // Dummy bookings data
-            const bookingsData = [
-                { id: '1001', spot: 'A12', vehicle: 'ABC123', checkin: '2023-05-01 10:00', checkout: '2023-05-01 14:30', amount: '$12.50', status: 'Completed' },
-                { id: '1002', spot: 'B05', vehicle: 'XYZ789', checkin: '2023-05-03 09:15', checkout: '2023-05-03 17:45', amount: '$25.50', status: 'Completed' },
-                { id: '1003', spot: 'C08', vehicle: 'ABC123', checkin: '2023-05-04 08:30', checkout: '', amount: '', status: 'Active' }
-            ];
-            
-            bookingsData.forEach(booking => {
-                const row = bookingsTable.insertRow();
-                row.insertCell().textContent = booking.id;
-                row.insertCell().textContent = booking.spot;
-                row.insertCell().textContent = booking.vehicle;
-                row.insertCell().textContent = booking.checkin;
-                row.insertCell().textContent = booking.checkout || '--';
-                row.insertCell().textContent = booking.amount || '--';
-                
-                const statusCell = row.insertCell();
-                const statusSpan = document.createElement('span');
-                statusSpan.className = 'badge ' + (booking.status === 'Active' ? 'bg-success' : 'bg-info');
-                statusSpan.textContent = booking.status;
-                statusCell.appendChild(statusSpan);
-            });
+            fetch(`/admin/user_details/${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Personal Info
+                    document.getElementById('modal-username').textContent = data.username || '';
+                    document.getElementById('modal-fullname').textContent = (data.first_name || '') + ' ' + (data.last_name || '');
+                    document.getElementById('modal-email').textContent = data.email || '';
+                    document.getElementById('modal-phone').textContent = data.phone || 'N/A';
+                    document.getElementById('modal-registered').textContent = data.registered_on || '';
+                    document.getElementById('modal-vehicles').textContent = data.vehicles ? data.vehicles.length : 0;
+
+                    // Statistics
+                    document.getElementById('modal-bookings').textContent = data.total_bookings || 0;
+                    document.getElementById('modal-active-bookings').textContent = data.active_bookings || 0;
+                    document.getElementById('modal-spent').textContent = data.total_spent ? `$${data.total_spent.toFixed(2)}` : '$0.00';
+
+                    // Vehicles Table
+                    const vehiclesTable = document.getElementById('modal-vehicles-table').getElementsByTagName('tbody')[0];
+                    vehiclesTable.innerHTML = '';
+                    if (data.vehicles && data.vehicles.length > 0) {
+                        data.vehicles.forEach(vehicle => {
+                            const row = vehiclesTable.insertRow();
+                            row.insertCell().textContent = vehicle.model || '';
+                            row.insertCell().textContent = vehicle.license_plate || '';
+                            row.insertCell().textContent = vehicle.vehicle_type || '';
+                            row.insertCell().textContent = vehicle.color || '';
+                        });
+                    }
+
+                    // Bookings Table
+                    const bookingsTable = document.getElementById('modal-bookings-table').getElementsByTagName('tbody')[0];
+                    bookingsTable.innerHTML = '';
+                    if (data.bookings && data.bookings.length > 0) {
+                        data.bookings.forEach(booking => {
+                            const row = bookingsTable.insertRow();
+                            row.insertCell().textContent = booking.id;
+                            row.insertCell().textContent = booking.spot;
+                            row.insertCell().textContent = booking.vehicle;
+                            row.insertCell().textContent = booking.checkin;
+                            row.insertCell().textContent = booking.checkout || '--';
+                            row.insertCell().textContent = booking.amount ? `$${booking.amount.toFixed(2)}` : '--';
+                            const statusCell = row.insertCell();
+                            const statusSpan = document.createElement('span');
+                            statusSpan.className = 'badge ' + (booking.status === 'Active' ? 'bg-success' : 'bg-info');
+                            statusSpan.textContent = booking.status;
+                            statusCell.appendChild(statusSpan);
+                        });
+                    }
+                })
+                .catch(() => {
+                    // fallback: clear modal fields
+                    document.getElementById('modal-username').textContent = '';
+                    document.getElementById('modal-fullname').textContent = '';
+                    document.getElementById('modal-email').textContent = '';
+                    document.getElementById('modal-phone').textContent = '';
+                    document.getElementById('modal-registered').textContent = '';
+                    document.getElementById('modal-vehicles').textContent = 0;
+                    document.getElementById('modal-bookings').textContent = 0;
+                    document.getElementById('modal-active-bookings').textContent = 0;
+                    document.getElementById('modal-spent').textContent = '$0.00';
+                    document.getElementById('modal-vehicles-table').getElementsByTagName('tbody')[0].innerHTML = '';
+                    document.getElementById('modal-bookings-table').getElementsByTagName('tbody')[0].innerHTML = '';
+                });
         });
     });
 </script>
