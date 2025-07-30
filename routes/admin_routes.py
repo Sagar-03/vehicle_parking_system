@@ -1,4 +1,5 @@
 
+# Imports (always first)
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, login_user, logout_user, current_user
 from extensions import db
@@ -10,82 +11,56 @@ from models.booking import Booking
 from models.vehicle import Vehicle
 from datetime import datetime, timedelta, timezone
 from functools import wraps
-# Using Flask-WTF for CSRF protection and Flask integration
+
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, DecimalField, IntegerField, BooleanField, SubmitField, SelectField, TextAreaField
 from wtforms.validators import DataRequired, NumberRange, Optional
 
-# Custom decorator to check if the user is an admin
+
+# Blueprint definition (must be before any @admin_bp.route usage)
+admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+# ✅ Custom decorator defined BEFORE it's used
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Check if user is authenticated first
         if not current_user.is_authenticated:
             flash('Please login to access this page.', 'warning')
             return redirect(url_for('admin.login'))
-        # Then check if the user is an Admin instance
+
         if not isinstance(current_user._get_current_object(), Admin):
-            # Special case for admin username
-            if hasattr(current_user, 'username') and current_user.username == 'admin':
-                pass
+            if current_user.username == 'admin':
+                admin = Admin.query.filter_by(username='admin').first()
+                if not admin:
+                    admin = Admin(username='admin', password='admin123')
+                    db.session.add(admin)
+                    db.session.commit()
+                logout_user()
+                flash('Please login as admin again.', 'warning')
+                return redirect(url_for('admin.login'))
             else:
-                flash('You do not have permission to access this page.', 'danger')
-                return redirect(url_for('user.dashboard'))
+                flash('Access denied. Admin privileges required.', 'danger')
+                return redirect(url_for('admin.login'))
+
         return f(*args, **kwargs)
     return decorated_function
 
-admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-# API endpoint to get spot details (user, vehicle, booking info)
-@admin_bp.route('/api/spot_details/<int:spot_id>', methods=['GET'])
+@admin_bp.route('/edit_parking_lot/<int:lot_id>', methods=['POST'])
 @login_required
 @admin_required
-def api_spot_details(spot_id):
-    spot = ParkingSpot.query.get_or_404(spot_id)
-    lot = spot.parking_lot
-    booking = Booking.query.filter_by(parking_spot_id=spot.id, leaving_timestamp=None).first()
-    user = None
-    vehicle = None
-    if booking:
-        user = User.query.get(booking.user_id)
-        vehicle = Vehicle.query.get(booking.vehicle_id) if booking.vehicle_id else None
-    data = {
-        'spot_id': spot.id,
-        'parking_lot': lot.name if lot else None,
-        'spot_number': spot.spot_number,
-        'spot_type': spot.spot_type,
-        'status': 'Available' if spot.is_available else 'Occupied',
-        'user': {
-            'id': user.id if user else None,
-            'name': f"{user.first_name} {user.last_name}" if user else None,
-            'email': user.email if user else None
-        } if user else None,
-        'vehicle': {
-            'model': vehicle.model if vehicle else booking.vehicle_reg if booking else None,
-            'license_plate': vehicle.license_plate if vehicle else booking.vehicle_reg if booking else None
-        } if booking else None,
-        'since': booking.parking_timestamp.strftime('%B %d, %Y %I:%M %p') if booking and booking.parking_timestamp else None
-    }
-    return jsonify(data)
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
-from flask_login import login_required, login_user, logout_user, current_user
-from extensions import db
-from models.admin import Admin
-from models.user import User
-from models.parking_lot import ParkingLot
-from models.parking_spot import ParkingSpot
-from models.booking import Booking
-from models.vehicle import Vehicle
-from datetime import datetime, timedelta, timezone
-from functools import wraps
-# Using Flask-WTF for CSRF protection and Flask integration
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, DecimalField, IntegerField, BooleanField, SubmitField, SelectField, TextAreaField
-from wtforms.validators import DataRequired, NumberRange, Optional
+def edit_parking_lot(lot_id):
+    lot = ParkingLot.query.get_or_404(lot_id)
+    lot.name = request.form.get('name')
+    lot.address = request.form.get('address')
+    lot.pin_code = request.form.get('pin_code')
+    lot.price = float(request.form.get('price', 0))
+    db.session.commit()
+    flash('Parking lot updated successfully!', 'success')
+    return redirect(url_for('admin.view_parking_spots'))
 
-admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-# Form classes
+# Form classes (must be defined before use)
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(message="Username is required")])
     password = PasswordField('Password', validators=[DataRequired(message="Password is required")])
@@ -105,39 +80,6 @@ class ParkingLotForm(FlaskForm):
     num_rows = IntegerField('Number of Rows', validators=[DataRequired(), NumberRange(min=1)])
     num_cols = IntegerField('Spots per Row', validators=[DataRequired(), NumberRange(min=1)])
     submit = SubmitField('Add Parking Lot')
-
-# Custom decorator to check if the user is an admin
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        # Check if user is authenticated first
-        if not current_user.is_authenticated:
-            flash('Please login to access this page.', 'warning')
-            return redirect(url_for('admin.login'))
-        
-        # Then check if the user is an Admin instance
-        if not isinstance(current_user._get_current_object(), Admin):
-            # Special case for admin username
-            if current_user.username == 'admin':
-                # This is a special case - the admin user is authenticated but not recognized as Admin type
-                # Let's attempt to find or create the admin in the database
-                admin = Admin.query.filter_by(username='admin').first()
-                if not admin:
-                    # Create admin user if it doesn't exist
-                    admin = Admin(username='admin', password='admin123')
-                    db.session.add(admin)
-                    db.session.commit()
-                
-                # Force logout and redirect to login
-                logout_user()
-                flash('Please login as admin again.', 'warning')
-                return redirect(url_for('admin.login'))
-            else:
-                flash('Access denied. Admin privileges required.', 'danger')
-                return redirect(url_for('admin.login'))
-        
-        return f(*args, **kwargs)
-    return decorated_function
 
 # Admin login
 @admin_bp.route('/login', methods=['GET', 'POST'])
