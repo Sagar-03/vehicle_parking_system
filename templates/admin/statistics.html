@@ -1,107 +1,134 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parking Statistics - Admin Dashboard</title>
-    <link rel="stylesheet" href="../shared/styles/admin.css">
+{% extends 'shared/base.html' %}
+
+{% block title %}Parking Statistics - Admin Dashboard{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
-    <script src="scripts/statistics.js" defer></script>
-    <style>
-        html {
-            height: 100%;
-            box-sizing: border-box;
-        }
-        *, *:before, *:after {
-            box-sizing: inherit;
-        }
-        body {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            flex: 1 1 auto;
-            display: flex;
-        }
-        main.content {
-            flex: 1 1 auto;
-        }
-        footer {
-            flex-shrink: 0;
-            background: #222;
-            color: #fff;
-            text-align: center;
-            padding: 12px 0;
-            width: 100%;
-            /* Remove margin-top: auto; */
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>Vehicle Parking System - Admin</h1>
-        <div class="user-info">
-            <span>Admin: <span id="admin-name">John Doe</span></span>
-            <a href="login.html" class="logout-btn">Logout</a>
-        </div>
-    </header>
-
-    <div class="container">
-        <nav class="sidebar">
-            <ul>
-                <li><a href="admin_dashboard.html">Dashboard</a></li>
-                <li><a href="add_parking_lot.html">Add Parking Lot</a></li>
-                <li><a href="view_parking_spot.html">View Parking Spots</a></li>
-                <li><a href="view_user.html">View Users</a></li>
-                <li><a href="statistics.html" class="active">Statistics</a></li>
-                <li><a href="../index.html">Main Site</a></li>
-            </ul>
+    <script src="{{ url_for('static', filename='js/statistics.js') }}" defer></script>
+{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="mb-3">Parking Statistics</h2>
+        <nav class="mb-3">
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-primary btn-sm me-2">Dashboard</a>
+            <a href="{{ url_for('admin.add_parking_lot') }}" class="btn btn-outline-secondary btn-sm me-2">Add Parking Lot</a>
+            <a href="{{ url_for('admin.view_parking_spots') }}" class="btn btn-outline-secondary btn-sm me-2">View Parking Spots</a>
+            <a href="{{ url_for('admin.view_user') }}" class="btn btn-outline-secondary btn-sm me-2">View Users</a>
+            <a href="{{ url_for('admin.statistics') }}" class="btn btn-primary btn-sm">Statistics</a>
+            <a href="/" class="btn btn-outline-dark btn-sm ms-2">Main Site</a>
         </nav>
+    </div>
+</div>
 
-        <main class="content">
-            <h2>Parking Statistics</h2>
-
-            <div class="statistics-controls">
-                <div class="time-period-selector">
-                    <label for="time-period">Select Time Period:</label>
-                    <select id="time-period">
-                        <option value="daily">Daily</option>
-                        <option value="weekly" selected>Weekly</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
-                    </select>
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Parking Statistics</h4>
+            </div>
+            <div class="card-body">
+                <form class="row g-3 align-items-center mb-3">
+                    <div class="col-auto">
+                        <label for="timePeriod" class="col-form-label">Select Time Period:</label>
+                    </div>
+                    <div class="col-auto">
+                        <select id="timePeriod" class="form-select form-select-sm">
+                            <option>Daily</option>
+                            <option>Weekly</option>
+                            <option>Monthly</option>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <label for="startDate" class="col-form-label">From:</label>
+                    </div>
+                    <div class="col-auto">
+                        <input type="date" id="startDate" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-auto">
+                        <label for="endDate" class="col-form-label">To:</label>
+                    </div>
+                    <div class="col-auto">
+                        <input type="date" id="endDate" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+                    </div>
+                </form>
+                <div class="row text-center mb-3">
+                    <div class="col-md-3 mb-2">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h6 class="card-title">Total Revenue</h6>
+                                <h4 class="text-success">$0.00</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <div class="card border-info">
+                            <div class="card-body">
+                                <h6 class="card-title">Total Bookings</h6>
+                                <h4 class="text-info">1</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <div class="card border-warning">
+                            <div class="card-body">
+                                <h6 class="card-title">Average Occupancy</h6>
+                                <h4 class="text-warning">0.1%</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <div class="card border-danger">
+                            <div class="card-body">
+                                <h6 class="card-title">Peak Hours</h6>
+                                <h4 class="text-danger">-</h4>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="date-range">
-                    <label for="start-date">From:</label>
-                    <input type="date" id="start-date">
-                    
-                    <label for="end-date">To:</label>
-                    <input type="date" id="end-date">
-                    
-                    <button id="apply-date-range">Apply</button>
+                <div class="d-flex justify-content-center mb-3">
+                    <button class="btn btn-outline-primary btn-sm me-2">Revenue</button>
+                    <button class="btn btn-outline-success btn-sm me-2">Occupancy</button>
+                    <button class="btn btn-outline-info btn-sm">Bookings</button>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <canvas id="statisticsChart" height="120"></canvas>
+                    </div>
                 </div>
             </div>
-
-            <div class="statistics-grid">
-                <div class="stat-card">
-                    <h3>Total Revenue</h3>
-                    <div class="stat-value">${{ '%.2f' % total_revenue }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <h3>Total Bookings</h3>
-                    <div class="stat-value">{{ total_bookings }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <h3>Average Occupancy</h3>
-                    <div class="stat-value">{{ '%.1f' % avg_occupancy }}%</div>
-                </div>
-
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Parking Lots Usage</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Lot A
+                        <span class="badge bg-primary rounded-pill">12/50</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Lot B
+                        <span class="badge bg-primary rounded-pill">8/40</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Lot C
+                        <span class="badge bg-primary rounded-pill">20/60</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    </div>
+{% endblock %}
                 <div class="stat-card">
                     <h3>Peak Hours</h3>
                     <div class="stat-value">{{ peak_hours }}</div>

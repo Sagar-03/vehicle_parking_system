@@ -80,6 +80,7 @@
                                 <th>Type</th>
                                 <th>Status</th>
                                 <th>Actions</th>
+                                <th>Edit Lot</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -102,7 +103,6 @@
                                                 data-lot-name="{{ lot.name if lot else 'N/A' }}" data-spot-type="{{ spot.spot_type }}">
                                             Details
                                         </button>
-                                        
                                         {% if spot.is_available %}
                                         <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#markOccupiedModal"
                                                 data-spot-id="{{ spot.id }}" data-spot-number="{{ spot.spot_number }}">
@@ -116,6 +116,53 @@
                                         {% endif %}
                                     </div>
                                 </td>
+                                <td>
+                                    {% if lot %}
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editLotModal"
+                                            data-lot-id="{{ lot.id }}" data-lot-name="{{ lot.name }}" data-lot-address="{{ lot.address }}" data-lot-pin="{{ lot.pin_code }}" data-lot-price="{{ lot.price }}">
+                                        Edit
+                                    </button>
+                                    {% else %}
+                                    <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+<!-- Edit Parking Lot Modal -->
+<div class="modal fade" id="editLotModal" tabindex="-1" aria-labelledby="editLotModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="editLotModalLabel">Edit Parking Lot</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.add_parking_lot') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="lot_id" id="edit-lot-id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit-lot-name" class="form-label">Lot Name:</label>
+                        <input type="text" class="form-control" id="edit-lot-name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-lot-address" class="form-label">Address:</label>
+                        <input type="text" class="form-control" id="edit-lot-address" name="address" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-lot-pin" class="form-label">PIN Code:</label>
+                        <input type="text" class="form-control" id="edit-lot-pin" name="pin_code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-lot-price" class="form-label">Price per Hour ($):</label>
+                        <input type="number" class="form-control" id="edit-lot-price" name="price" min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -282,6 +329,18 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // Edit Lot Modal population
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('[data-bs-target="#editLotModal"]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('edit-lot-id').value = this.getAttribute('data-lot-id');
+                document.getElementById('edit-lot-name').value = this.getAttribute('data-lot-name');
+                document.getElementById('edit-lot-address').value = this.getAttribute('data-lot-address');
+                document.getElementById('edit-lot-pin').value = this.getAttribute('data-lot-pin');
+                document.getElementById('edit-lot-price').value = this.getAttribute('data-lot-price');
+            });
+        });
+    });
     // Initialize spot status chart
     const spotStatusCtx = document.getElementById('spotStatusChart').getContext('2d');
     const spotStatusChart = new Chart(spotStatusCtx, {
