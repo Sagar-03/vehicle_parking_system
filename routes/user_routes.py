@@ -9,9 +9,22 @@ from models.vehicle import Vehicle
 from datetime import datetime, timezone
 from functools import wraps
 # Using Flask-WTF for CSRF protection and Flask integration
+
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, HiddenField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length
+
+# Custom decorator to ensure the user is not an admin
+def user_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        from models.admin import Admin
+        if isinstance(current_user, Admin):
+            flash('This feature is only for regular users.', 'danger')
+            return redirect(url_for('admin.dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
@@ -45,6 +58,77 @@ class VehicleForm(FlaskForm):
     color = StringField('Color', validators=[Length(max=20)])
     submit = SubmitField('Add Vehicle')
 
+# View/Add vehicles
+@user_bp.route('/vehicles', methods=['GET', 'POST'])
+@login_required
+@user_required
+def vehicles():
+    form = VehicleForm()
+    user_vehicles = Vehicle.query.filter_by(user_id=current_user.id).all()
+    if request.method == 'POST' and form.validate():
+        # Check if license plate already exists
+        existing_vehicle = Vehicle.query.filter_by(license_plate=form.license_plate.data).first()
+        if existing_vehicle:
+            flash('A vehicle with this license plate already exists.', 'danger')
+            return redirect(url_for('user.vehicles'))
+        # Create new vehicle
+        vehicle = Vehicle(
+            user_id=current_user.id,
+            model=form.model.data,
+            license_plate=form.license_plate.data,
+            vehicle_type=form.vehicle_type.data,
+            color=form.color.data
+        )
+        db.session.add(vehicle)
+        db.session.commit()
+        flash('Vehicle added successfully!', 'success')
+        return redirect(url_for('user.vehicles'))
+    return render_template('user/vehicles.html', form=form, vehicles=user_vehicles)
+
+# Edit vehicle
+@user_bp.route('/edit_vehicle/<int:vehicle_id>', methods=['GET', 'POST'])
+@login_required
+@user_required
+def edit_vehicle(vehicle_id):
+    vehicle = Vehicle.query.get_or_404(vehicle_id)
+    if vehicle.user_id != current_user.id:
+        flash('You do not have permission to edit this vehicle.', 'danger')
+        return redirect(url_for('user.vehicles'))
+    form = VehicleForm(obj=vehicle)
+    if request.method == 'POST' and form.validate():
+        # Check for license plate conflict (if changed)
+        if form.license_plate.data != vehicle.license_plate:
+            if Vehicle.query.filter_by(license_plate=form.license_plate.data).first():
+                flash('A vehicle with this license plate already exists.', 'danger')
+                return redirect(url_for('user.edit_vehicle', vehicle_id=vehicle_id))
+        vehicle.model = form.model.data
+        vehicle.license_plate = form.license_plate.data
+        vehicle.vehicle_type = form.vehicle_type.data
+        vehicle.color = form.color.data
+        db.session.commit()
+        flash('Vehicle updated successfully!', 'success')
+        return redirect(url_for('user.vehicles'))
+    return render_template('user/edit_vehicle.html', form=form, vehicle=vehicle)
+
+# Delete vehicle
+@user_bp.route('/delete_vehicle/<int:vehicle_id>', methods=['POST'])
+@login_required
+@user_required
+def delete_vehicle(vehicle_id):
+    vehicle = Vehicle.query.get_or_404(vehicle_id)
+    if vehicle.user_id != current_user.id:
+        flash('You do not have permission to delete this vehicle.', 'danger')
+        return redirect(url_for('user.vehicles'))
+    # Check if vehicle is currently being used in an active booking
+    active_booking = Booking.query.filter_by(vehicle_id=vehicle_id, booking_status='active').first()
+    if active_booking:
+        flash('Cannot delete a vehicle that is currently being used in an active booking.', 'danger')
+        return redirect(url_for('user.vehicles'))
+    db.session.delete(vehicle)
+    db.session.commit()
+    flash('Vehicle deleted successfully!', 'success')
+    return redirect(url_for('user.vehicles'))
+
 class BookingForm(FlaskForm):
     parking_lot_id = SelectField('Parking Lot', coerce=int, validators=[DataRequired()])
     vehicle_id = SelectField('Vehicle', coerce=int, validators=[DataRequired()])
@@ -56,16 +140,7 @@ class ConfirmBookingForm(FlaskForm):
     spot_id = HiddenField('Spot ID', validators=[DataRequired()])
     submit = SubmitField('Confirm Booking')
 
-# Custom decorator to ensure the user is not an admin
-def user_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        from models.admin import Admin
-        if isinstance(current_user, Admin):
-            flash('This feature is only for regular users.', 'danger')
-            return redirect(url_for('admin.dashboard'))
-        return f(*args, **kwargs)
-    return decorated_function
+
 
 # User registration
 @user_bp.route('/register', methods=['GET', 'POST'])
@@ -570,63 +645,8 @@ def parking_stats():
 
 
 
-# Vehicle management
-@user_bp.route('/vehicles', methods=['GET', 'POST'])
-@login_required
-@user_required
-def vehicles():
-    form = VehicleForm()
-    
-    # Get user's vehicles
-    user_vehicles = Vehicle.query.filter_by(user_id=current_user.id).all()
-    
-    if request.method == 'POST' and form.validate():
-        # Check if license plate already exists
-        existing_vehicle = Vehicle.query.filter_by(license_plate=form.license_plate.data).first()
-        if existing_vehicle:
-            flash('A vehicle with this license plate already exists.', 'danger')
-            return redirect(url_for('user.vehicles'))
-        
-        # Create new vehicle
-        vehicle = Vehicle(
-            user_id=current_user.id,
-            model=form.model.data,
-            license_plate=form.license_plate.data,
-            vehicle_type=form.vehicle_type.data,
-            color=form.color.data
-        )
-        
-        db.session.add(vehicle)
-        db.session.commit()
-        
-        flash('Vehicle added successfully!', 'success')
-        return redirect(url_for('user.vehicles'))
-    
-    return render_template('user/vehicles.html', form=form, vehicles=user_vehicles)
 
-@user_bp.route('/delete_vehicle/<int:vehicle_id>', methods=['POST'])
-@login_required
-@user_required
-def delete_vehicle(vehicle_id):
-    vehicle = Vehicle.query.get_or_404(vehicle_id)
-    
-    # Check if this vehicle belongs to the current user
-    if vehicle.user_id != current_user.id:
-        flash('You do not have permission to delete this vehicle.', 'danger')
-        return redirect(url_for('user.vehicles'))
-    
-    # Check if vehicle is currently being used in an active booking
-    active_booking = Booking.query.filter_by(vehicle_id=vehicle_id, booking_status='active').first()
-    if active_booking:
-        flash('Cannot delete a vehicle that is currently being used in an active booking.', 'danger')
-        return redirect(url_for('user.vehicles'))
-    
-    # Delete the vehicle
-    db.session.delete(vehicle)
-    db.session.commit()
-    
-    flash('Vehicle deleted successfully!', 'success')
-    return redirect(url_for('user.vehicles'))
+    # ...existing code...
 
 # Search parking lots
 @user_bp.route('/search_parking')
