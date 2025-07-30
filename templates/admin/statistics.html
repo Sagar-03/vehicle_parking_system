@@ -7,6 +7,38 @@
     <link rel="stylesheet" href="../shared/styles/admin.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
     <script src="scripts/statistics.js" defer></script>
+    <style>
+        html {
+            height: 100%;
+            box-sizing: border-box;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            flex: 1 1 auto;
+            display: flex;
+        }
+        main.content {
+            flex: 1 1 auto;
+        }
+        footer {
+            flex-shrink: 0;
+            background: #222;
+            color: #fff;
+            text-align: center;
+            padding: 12px 0;
+            width: 100%;
+            /* Remove margin-top: auto; */
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -57,26 +89,22 @@
             <div class="statistics-grid">
                 <div class="stat-card">
                     <h3>Total Revenue</h3>
-                    <div class="stat-value">$12,450.75</div>
-                    <div class="stat-change positive">+8.5% from previous period</div>
+                    <div class="stat-value">${{ '%.2f' % total_revenue }}</div>
                 </div>
 
                 <div class="stat-card">
                     <h3>Total Bookings</h3>
-                    <div class="stat-value">1,245</div>
-                    <div class="stat-change positive">+12.3% from previous period</div>
+                    <div class="stat-value">{{ total_bookings }}</div>
                 </div>
 
                 <div class="stat-card">
                     <h3>Average Occupancy</h3>
-                    <div class="stat-value">78.5%</div>
-                    <div class="stat-change positive">+3.2% from previous period</div>
+                    <div class="stat-value">{{ '%.1f' % avg_occupancy }}%</div>
                 </div>
 
                 <div class="stat-card">
                     <h3>Peak Hours</h3>
-                    <div class="stat-value">10 AM - 2 PM</div>
-                    <div class="stat-note">Monday - Friday</div>
+                    <div class="stat-value">{{ peak_hours }}</div>
                 </div>
             </div>
 
