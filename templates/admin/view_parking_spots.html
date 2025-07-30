@@ -43,15 +43,15 @@
                             <option value="occupied" {% if request.args.get('status') == 'occupied' %}selected{% endif %}>Occupied</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <!-- <div class="col-md-3">
                         <label for="type" class="form-label">Spot Type:</label>
                         <select class="form-select" id="type" name="type">
                             <option value="all">All Types</option>
                             <option value="standard" {% if request.args.get('type') == 'standard' %}selected{% endif %}>Standard</option>
-                            <option value="disabled" {% if request.args.get('type') == 'disabled' %}selected{% endif %}>Disabled</option>
+                            <!-- <option value="disabled" {% if request.args.get('type') == 'disabled' %}selected{% endif %}>Disabled</option>
                             <option value="electric" {% if request.args.get('type') == 'electric' %}selected{% endif %}>Electric Vehicle</option>
                         </select>
-                    </div>
+                    </div> -->
                     <div class="col-md-2 d-flex align-items-end">
                         <div class="d-grid w-100">
                             <button type="submit" class="btn btn-primary">Apply Filters</button>
